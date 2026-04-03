@@ -12,6 +12,9 @@ interface ReadingCardDao {
     @Query("SELECT * FROM reading_cards WHERE readingId = :readingId ORDER BY positionOrder")
     fun observeCardsForReading(readingId: Long): Flow<List<ReadingCardEntity>>
 
+    @Query("SELECT * FROM reading_cards WHERE readingId = :readingId ORDER BY positionOrder")
+    suspend fun getCardsForReading(readingId: Long): List<ReadingCardEntity>
+
     @Insert
     suspend fun insertAll(cards: List<ReadingCardEntity>)
 

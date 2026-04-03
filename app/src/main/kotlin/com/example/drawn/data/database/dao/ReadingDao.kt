@@ -16,6 +16,9 @@ interface ReadingDao {
     @Query("SELECT * FROM readings WHERE id = :id")
     fun observeReadingById(id: Long): Flow<ReadingEntity?>
 
+    @Query("SELECT * FROM readings WHERE id = :id")
+    suspend fun getReadingById(id: Long): ReadingEntity?
+
     @Insert
     suspend fun insert(reading: ReadingEntity): Long
 
