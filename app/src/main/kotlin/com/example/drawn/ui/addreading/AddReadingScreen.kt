@@ -91,21 +91,13 @@ fun AddReadingScreen(
                             }
 
                             AddReadingStep.CardAssignment -> {
-                                // Placeholder — to be implemented in Plan 03
-                                Column(
-                                    modifier = Modifier.fillMaxSize(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = "Step 2: Card Assignment",
-                                        style = MaterialTheme.typography.headlineSmall
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Coming next",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                state.selectedSpread?.let { spread ->
+                                    CardAssignmentStep(
+                                        spread = spread,
+                                        assignedCards = state.assignedCards,
+                                        onPositionCardSelected = { positionOrder, card ->
+                                            viewModel.assignCard(positionOrder, card)
+                                        }
                                     )
                                 }
                             }

@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import com.example.drawn.ui.addreading.AddReadingScreen
+import com.example.drawn.ui.readingdetail.ReadingDetailScreen
 import com.example.drawn.ui.readinglist.ReadingListScreen
 import com.example.drawn.ui.readinglist.ReadingListViewModel
 
@@ -27,18 +29,25 @@ fun DrawnNavHost(
                     ReadingListScreen(
                         viewModel = readingListViewModel,
                         onAddReading = {
-                            // TODO: Navigate to add reading screen (Phase 2)
+                            backStack.add(AddReading)
                         },
                         onReadingSelected = { readingId ->
-                            // TODO: Reading detail screen (Phase 2)
                             backStack.add(ReadingDetail(readingId = readingId))
                         }
                     )
                 }
 
+                is AddReading -> NavEntry(key) {
+                    AddReadingScreen(
+                        onNavigateBack = { backStack.removeLastOrNull() }
+                    )
+                }
+
                 is ReadingDetail -> NavEntry(key) {
-                    // TODO: Reading detail screen (Phase 2)
-                    androidx.compose.material3.Text(text = "Reading detail: ${key.readingId}")
+                    ReadingDetailScreen(
+                        readingId = key.readingId,
+                        onNavigateBack = { backStack.removeLastOrNull() }
+                    )
                 }
 
                 else -> error("Unknown route: $key")
