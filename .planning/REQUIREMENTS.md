@@ -10,9 +10,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Reading Management
 
 - [x] **READ-01**: User can create a new reading by selecting a spread and assigning cards to positions
-- [ ] **READ-02**: User can add freeform text notes to a reading
-- [ ] **READ-03**: User can view a chronological list of past readings
-- [ ] **READ-04**: User can view full reading details including spread layout, assigned cards, notes, and photos
+- [x] **READ-02**: User can add freeform text notes to a reading
+- [x] **READ-03**: User can view a chronological list of past readings
+- [x] **READ-04**: User can view full reading details including spread layout, assigned cards, notes, and photos
 - [ ] **READ-05**: User can edit an existing reading
 - [ ] **READ-06**: User can delete a reading
 - [ ] **READ-07**: User can search past readings by notes, card names, or date
@@ -26,9 +26,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Card Management
 
-- [ ] **CARD-01**: App includes all 78 Rider-Waite-Smith cards (22 Major Arcana, 56 Minor Arcana)
-- [ ] **CARD-02**: User can browse and select cards from a visual grid/list when assigning to positions
-- [ ] **CARD-03**: Card images are bundled in the app and work offline
+- [x] **CARD-01**: App includes all 78 Rider-Waite-Smith cards (22 Major Arcana, 56 Minor Arcana)
+- [x] **CARD-02**: User can browse and select cards from a visual grid/list when assigning to positions
+- [x] **CARD-03**: Card images are bundled in the app and work offline
 - [ ] **CARD-04**: User can toggle reversed/upright orientation for each card in a reading
 
 ### Photo Attachments
@@ -100,9 +100,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | READ-01 | Phase 2 | Complete |
-| READ-02 | Phase 2 | Pending |
-| READ-03 | Phase 2 | Pending |
-| READ-04 | Phase 2 | Pending |
+| READ-02 | Phase 2 | Complete |
+| READ-03 | Phase 2 | Complete |
+| READ-04 | Phase 2 | Complete |
 | READ-05 | Phase 3 | Pending |
 | READ-06 | Phase 3 | Pending |
 | READ-07 | Phase 3 | Pending |
@@ -110,9 +110,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SPRD-02 | Phase 2 | Complete |
 | SPRD-03 | Phase 2 | Complete |
 | SPRD-04 | Phase 2 | Complete |
-| CARD-01 | Phase 2 | Pending |
-| CARD-02 | Phase 2 | Pending |
-| CARD-03 | Phase 2 | Pending |
+| CARD-01 | Phase 2 | Complete |
+| CARD-02 | Phase 2 | Complete |
+| CARD-03 | Phase 2 | Complete |
 | CARD-04 | Phase 3 | Pending |
 | PHOTO-01 | Phase 3 | Pending |
 | PHOTO-02 | Phase 3 | Pending |
