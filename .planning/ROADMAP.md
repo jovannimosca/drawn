@@ -27,7 +27,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Developer can build and run the app on a physical Android device
   2. App launches with a functioning main screen (even if placeholder)
   3. Room database schema is defined with core tables (readings, cards, spreads, reading_cards, photos)
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Gradle project structure with version catalog and all dependencies
+- [ ] 01-02-PLAN.md — CI/CD pipeline with Ktlint, Detekt, and GitHub Actions
+- [ ] 01-03-PLAN.md — Room database schema with domain models, entities, DAOs, and pre-population
+- [ ] 01-04-PLAN.md — Hilt DI modules and repository layer with entity-domain mapping
+- [ ] 01-05-PLAN.md — UI layer with dark theme, Navigation Compose 3, and ReadingListScreen
 
 ### Phase 2: Core Recording Loop
 **Goal**: Users can record a complete tarot reading and browse their reading history
