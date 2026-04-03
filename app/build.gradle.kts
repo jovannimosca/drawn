@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -111,4 +113,24 @@ tasks.withType<Test> {
 
 ksp {
     arg("room.generateKotlin", "true")
+}
+
+// Ktlint configuration
+ktlint {
+    android.set(true)
+    outputToConsole.set(true)
+    outputColorName.set(true)
+    ignoreFailures.set(false)
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
+}
+
+// Detekt configuration
+detekt {
+    config.setFrom(files("$rootDir/detekt.yml"))
+    buildUponDefaultConfig.set(true)
+    baseline.set(file("$rootDir/detekt-baseline.xml"))
+    autoCorrect.set(false)
 }

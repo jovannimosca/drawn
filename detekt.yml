@@ -1,0 +1,122 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+  weights:
+    # complexity: 2
+    # LongParameterList: 1
+    # style: 1
+    # comments: 1
+
+config:
+  validation: true
+  warningsAsErrors: false
+  checkExhaustiveness: false
+
+processors:
+  active: true
+  exclude:
+    - 'DetektProgressListener'
+
+console-reports:
+  active: true
+  exclude:
+    - 'ProjectStatisticsReport'
+
+complexity:
+  active: true
+  ComplexMethod:
+    active: true
+    threshold: 15
+  LongMethod:
+    active: true
+    threshold: 60
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 7
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 11
+    thresholdInClasses: 11
+    thresholdInInterfaces: 11
+    thresholdInObjects: 11
+    thresholdInEnums: 11
+
+style:
+  active: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+    excludePackageStatements: true
+    excludeImportStatements: true
+    excludeCommentStatements: false
+    excludeRawStrings: true
+  UnusedImports:
+    active: true
+  WildcardImport:
+    active: true
+    excludeImports:
+      - 'java.util.*'
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: true
+    max: 2
+  ThrowsCount:
+    active: true
+    max: 2
+  UnusedPrivateMember:
+    active: true
+  OptionalAbstractKeyword:
+    active: true
+  RedundantVisibilityModifier:
+    active: true
+
+potential-bugs:
+  active: true
+  MissingWhenCase:
+    active: true
+  RedundantElseInWhen:
+    active: true
+  UnnecessarySafeCall:
+    active: true
+  NullableToStringCall:
+    active: true
+  CastToNullableType:
+    active: true
+  UnsafeCast:
+    active: true
+
+performance:
+  active: true
+  SpreadOperator:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**']
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**']
+  TopLevelPropertyNaming:
+    active: true
+    constantPattern: '[A-Z][_A-Z0-9]*'
+    propertyPattern: '[a-z][A-Za-z0-9]*'
+    privatePropertyPattern: '(_)?[a-z][A-Za-z0-9]*'
+  ClassNaming:
+    active: true
+    classPattern: '[A-Z][a-zA-Z0-9]*'
+  EnumNaming:
+    active: true
+    enumEntryPattern: '[A-Z][_a-zA-Z0-9]*'
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false
+  ExceptionRaisedInUnexpectedLocation:
+    active: true
+  PrintStackTrace:
+    active: true
+  SwallowedException:
+    active: true
