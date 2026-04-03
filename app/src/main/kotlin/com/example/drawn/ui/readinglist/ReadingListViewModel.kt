@@ -18,7 +18,7 @@ class ReadingListViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<ReadingListUiState> = readingRepository.observeAllReadings()
-        .map { readings -> ReadingListUiState.Success(readings) }
+        .map { readings -> ReadingListUiState.Success(readings) as ReadingListUiState }
         .catch { error ->
             emit(ReadingListUiState.Error(error.message ?: "Unknown error"))
         }

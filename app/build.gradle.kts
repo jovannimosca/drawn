@@ -1,9 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
 }
@@ -35,11 +35,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
-        compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests {
@@ -60,6 +57,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.material.icons.core)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -116,12 +114,25 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// KSP registers generated sources via kotlin.sourceSets which AGP 9.0 built-in Kotlin doesn't allow.
+// Workaround: register KSP output dirs via android.sourceSets instead.
+android.sourceSets {
+    getByName("main") {
+        java.srcDirs("build/generated/ksp/main/kotlin")
+    }
+    getByName("debug") {
+        java.srcDirs("build/generated/ksp/debug/kotlin", "build/generated/ksp/debug/java")
+    }
+    getByName("release") {
+        java.srcDirs("build/generated/ksp/release/kotlin", "build/generated/ksp/release/java")
+    }
+}
+
 // Ktlint configuration
 ktlint {
-    android.set(true)
-    outputToConsole.set(true)
-    outputColorName.set(true)
-    ignoreFailures.set(false)
+    android = true
+    outputToConsole = true
+    ignoreFailures = false
     filter {
         exclude("**/generated/**")
         include("**/kotlin/**")
@@ -131,7 +142,7 @@ ktlint {
 // Detekt configuration
 detekt {
     config.setFrom(files("$rootDir/detekt.yml"))
-    buildUponDefaultConfig.set(true)
-    baseline.set(file("$rootDir/detekt-baseline.xml"))
-    autoCorrect.set(false)
+    buildUponDefaultConfig = true
+    baseline = file("$rootDir/detekt-baseline.xml")
+    autoCorrect = false
 }
