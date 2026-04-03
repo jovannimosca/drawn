@@ -19,10 +19,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Spread Management
 
-- [ ] **SPRD-01**: App includes Celtic Cross spread (10 positions)
-- [ ] **SPRD-02**: App includes Three Card spread (3 positions)
-- [ ] **SPRD-03**: App includes Past/Present/Future spread (3 positions)
-- [ ] **SPRD-04**: User can see spread name and position meanings when selecting cards
+- [x] **SPRD-01**: App includes Celtic Cross spread (10 positions)
+- [x] **SPRD-02**: App includes Three Card spread (3 positions)
+- [x] **SPRD-03**: App includes Past/Present/Future spread (3 positions)
+- [x] **SPRD-04**: User can see spread name and position meanings when selecting cards
 
 ### Card Management
 
@@ -106,10 +106,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | READ-05 | Phase 3 | Pending |
 | READ-06 | Phase 3 | Pending |
 | READ-07 | Phase 3 | Pending |
-| SPRD-01 | Phase 2 | Pending |
-| SPRD-02 | Phase 2 | Pending |
-| SPRD-03 | Phase 2 | Pending |
-| SPRD-04 | Phase 2 | Pending |
+| SPRD-01 | Phase 2 | Complete |
+| SPRD-02 | Phase 2 | Complete |
+| SPRD-03 | Phase 2 | Complete |
+| SPRD-04 | Phase 2 | Complete |
 | CARD-01 | Phase 2 | Pending |
 | CARD-02 | Phase 2 | Pending |
 | CARD-03 | Phase 2 | Pending |

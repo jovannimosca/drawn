@@ -50,7 +50,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — AddReading route, wizard state types, and AddReadingViewModel with save logic
-- [ ] 02-02-PLAN.md — AddReadingScreen wizard container, SpreadPickerStep, NotesAndSaveStep, and step indicator
+- [x] 02-02-PLAN.md — AddReadingScreen wizard container, SpreadPickerStep, NotesAndSaveStep, and step indicator
 - [ ] 02-03-PLAN.md — CardAssignmentStep with position slots, CardPickerBottomSheet, and CardThumbnail
 - [ ] 02-04-PLAN.md — Wire AddReading navigation, implement ReadingDetailScreen with ViewModel
 
