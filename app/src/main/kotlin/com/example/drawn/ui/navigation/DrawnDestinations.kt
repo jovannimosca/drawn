@@ -6,4 +6,7 @@ import kotlinx.serialization.Serializable
 object ReadingList
 
 @Serializable
+object AddReading
+
+@Serializable
 data class ReadingDetail(val readingId: Long)
