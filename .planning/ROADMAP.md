@@ -46,8 +46,13 @@ Plans:
   3. User can add freeform text notes to a reading and save it
   4. User can view a chronological list of past readings
   5. User can tap a reading to view full details including spread layout, assigned cards, and notes
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — AddReading route, wizard state types, and AddReadingViewModel with save logic
+- [ ] 02-02-PLAN.md — AddReadingScreen wizard container, SpreadPickerStep, NotesAndSaveStep, and step indicator
+- [ ] 02-03-PLAN.md — CardAssignmentStep with position slots, CardPickerBottomSheet, and CardThumbnail
+- [ ] 02-04-PLAN.md — Wire AddReading navigation, implement ReadingDetailScreen with ViewModel
 
 ### Phase 3: Enrichment & Polish
 **Goal**: Users can fully manage readings with photos, search, editing, and a polished dark theme
