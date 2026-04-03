@@ -1,4 +1,4 @@
-# Tarot Card Reading Tracker
+# Drawn
 
 A mobile application called "Drawn" for tracking and organizing tarot card readings with intuitive spread selection and card assignment capabilities.
 
