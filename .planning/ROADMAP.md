@@ -49,7 +49,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — AddReading route, wizard state types, and AddReadingViewModel with save logic
+- [x] 02-01-PLAN.md — AddReading route, wizard state types, and AddReadingViewModel with save logic
 - [ ] 02-02-PLAN.md — AddReadingScreen wizard container, SpreadPickerStep, NotesAndSaveStep, and step indicator
 - [ ] 02-03-PLAN.md — CardAssignmentStep with position slots, CardPickerBottomSheet, and CardThumbnail
 - [ ] 02-04-PLAN.md — Wire AddReading navigation, implement ReadingDetailScreen with ViewModel
@@ -86,6 +86,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Dev Environment | 0/0 | Not started | - |
-| 2. Core Recording Loop | 0/0 | Not started | - |
+| 2. Core Recording Loop | 1/4 | In Progress|  |
 | 3. Enrichment & Polish | 0/0 | Not started | - |
 | 4. Testing & CI | 0/0 | Not started | - |

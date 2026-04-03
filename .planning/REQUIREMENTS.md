@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Reading Management
 
-- [ ] **READ-01**: User can create a new reading by selecting a spread and assigning cards to positions
+- [x] **READ-01**: User can create a new reading by selecting a spread and assigning cards to positions
 - [ ] **READ-02**: User can add freeform text notes to a reading
 - [ ] **READ-03**: User can view a chronological list of past readings
 - [ ] **READ-04**: User can view full reading details including spread layout, assigned cards, notes, and photos
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| READ-01 | Phase 2 | Pending |
+| READ-01 | Phase 2 | Complete |
 | READ-02 | Phase 2 | Pending |
 | READ-03 | Phase 2 | Pending |
 | READ-04 | Phase 2 | Pending |

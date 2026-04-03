@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-04-03T22:33:17.560Z"
+stopped_at: Completed 02-core-recording-loop-01-PLAN.md
+last_updated: "2026-04-03T22:50:40.516Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 0
 ---
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: N/A
 
 *Updated after each plan completion*
+| Phase 02-core-recording-loop P01 | 5 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,7 @@ Recent decisions affecting current work:
 - 3-5 common spreads for v1 — Celtic Cross, Three Card, Past/Present/Future minimum
 - Card images bundled in app — no network dependency, works offline
 - F-Droid CI/CD deferred — v1 focuses on quality gates only
+- [Phase 02-core-recording-loop]: Used MutableStateFlow instead of derived stateIn for AddReadingViewModel — wizard actions require imperative state mutations
 
 ### Pending Todos
 
@@ -75,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T22:33:17.553Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-core-recording-loop/02-UI-SPEC.md
+Last session: 2026-04-03T22:50:40.515Z
+Stopped at: Completed 02-core-recording-loop-01-PLAN.md
+Resume file: None
