@@ -87,7 +87,7 @@ Plans:
 Plans:
 - [x] 04-01-PLAN.md — Kover coverage config + ViewModel unit tests (AddReading, ReadingList, ReadingDetail)
 - [x] 04-02-PLAN.md — DAO tests (Room in-memory) + Repository tests (mocked DAOs)
-- [ ] 04-03-PLAN.md — Compose UI tests + CI workflow with coverage gates
+- [x] 04-03-PLAN.md — Compose UI tests + CI workflow with coverage gates
 
 ## Progress
 

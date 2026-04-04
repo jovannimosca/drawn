@@ -46,9 +46,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Testing & Quality
 
 - [x] **TEST-01**: All code has unit tests with minimum 80% coverage
-- [ ] **TEST-02**: CI pipeline runs unit tests on every pull request
-- [ ] **TEST-03**: CI pipeline runs security/lint scans on every pull request
-- [ ] **TEST-04**: CI pipeline blocks merge if coverage drops below 80%
+- [x] **TEST-02**: CI pipeline runs unit tests on every pull request
+- [x] **TEST-03**: CI pipeline runs security/lint scans on every pull request
+- [x] **TEST-04**: CI pipeline blocks merge if coverage drops below 80%
 
 ### Development Environment
 
@@ -121,9 +121,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | THEME-01 | Phase 3 | Complete |
 | THEME-02 | Phase 3 | Complete |
 | TEST-01 | Phase 4 | Complete |
-| TEST-02 | Phase 4 | Pending |
-| TEST-03 | Phase 4 | Pending |
-| TEST-04 | Phase 4 | Pending |
+| TEST-02 | Phase 4 | Complete |
+| TEST-03 | Phase 4 | Complete |
+| TEST-04 | Phase 4 | Complete |
 | DEV-01 | Phase 1 | Pending |
 | DEV-02 | Phase 1 | Pending |
 
