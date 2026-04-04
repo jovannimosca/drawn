@@ -1,13 +1,17 @@
 package com.example.drawn.ui.readingdetail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -32,11 +36,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.drawn.domain.model.ReadingCard
+import com.example.drawn.ui.theme.DarkOnSecondary
 import com.example.drawn.ui.theme.DarkPrimary
+import com.example.drawn.ui.theme.DarkSecondary
 import com.example.drawn.ui.theme.DarkSurface
 import com.example.drawn.ui.theme.DarkSurfaceVariant
 
@@ -298,27 +306,47 @@ private fun ReadingDetailCardItem(
         shape = MaterialTheme.shapes.medium,
         modifier = modifier
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Text(
-                text = readingCard.positionName,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = readingCard.cardId.toString(), // Show card ID since we don't have Card lookup
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            if (readingCard.interpretation != null) {
-                Spacer(modifier = Modifier.height(4.dp))
+        Box(modifier = Modifier.padding(12.dp)) {
+            Column {
                 Text(
-                    text = readingCard.interpretation,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = readingCard.positionName,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = readingCard.cardId.toString(), // Show card ID since we don't have Card lookup
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.graphicsLayer {
+                        rotationZ = if (readingCard.isReversed) 180f else 0f
+                    }
+                )
+                if (readingCard.interpretation != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = readingCard.interpretation,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (readingCard.isReversed) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(16.dp)
+                        .background(DarkSecondary, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "R",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DarkOnSecondary,
+                        fontSize = 8.sp
+                    )
+                }
             }
         }
     }

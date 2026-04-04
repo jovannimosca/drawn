@@ -28,12 +28,17 @@ class AddReadingViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<AddReadingUiState>(AddReadingUiState.Loading)
     val uiState: StateFlow<AddReadingUiState> = _uiState.asStateFlow()
 
+    private var spreads: List<Spread> = emptyList()
+    private var cards: List<Card> = emptyList()
+
     init {
         viewModelScope.launch {
             combine(
                 spreadRepository.observeAllSpreads(),
                 cardRepository.observeAllCards()
             ) { spreads, cards ->
+                this@AddReadingViewModel.spreads = spreads
+                this@AddReadingViewModel.cards = cards
                 AddReadingUiState.Ready(
                     AddReadingState(
                         spreads = spreads,
@@ -41,7 +46,6 @@ class AddReadingViewModel @Inject constructor(
                     )
                 )
             }.collect { state ->
-                // Only update if currently Loading — preserve user-modified Ready state
                 if (_uiState.value is AddReadingUiState.Loading) {
                     _uiState.value = state
                 }
@@ -76,6 +80,19 @@ class AddReadingViewModel @Inject constructor(
             val currentState = (_uiState.value as? AddReadingUiState.Ready)?.state ?: return@launch
             val updatedAssigned = currentState.assignedCards - positionOrder
             val updatedState = currentState.copy(assignedCards = updatedAssigned)
+            _uiState.value = AddReadingUiState.Ready(updatedState)
+        }
+    }
+
+    fun togglePositionReversed(positionOrder: Int) {
+        viewModelScope.launch {
+            val currentState = (_uiState.value as? AddReadingUiState.Ready)?.state ?: return@launch
+            val updatedReversed = if (currentState.reversedPositions.contains(positionOrder)) {
+                currentState.reversedPositions - positionOrder
+            } else {
+                currentState.reversedPositions + positionOrder
+            }
+            val updatedState = currentState.copy(reversedPositions = updatedReversed)
             _uiState.value = AddReadingUiState.Ready(updatedState)
         }
     }
@@ -148,7 +165,7 @@ class AddReadingViewModel @Inject constructor(
                         positionName = position?.name ?: "Position $positionOrder",
                         positionOrder = positionOrder,
                         interpretation = null,
-                        isReversed = false
+                        isReversed = currentState.reversedPositions.contains(positionOrder)
                     )
                 }
 
@@ -163,8 +180,25 @@ class AddReadingViewModel @Inject constructor(
     fun retry() {
         viewModelScope.launch {
             if (_uiState.value is AddReadingUiState.Error) {
-                _uiState.value = AddReadingUiState.Loading
+                resetToReady()
             }
+        }
+    }
+
+    fun reset() {
+        resetToReady()
+    }
+
+    private fun resetToReady() {
+        if (spreads.isNotEmpty() && cards.isNotEmpty()) {
+            _uiState.value = AddReadingUiState.Ready(
+                AddReadingState(
+                    spreads = spreads,
+                    cards = cards
+                )
+            )
+        } else {
+            _uiState.value = AddReadingUiState.Loading
         }
     }
 }

@@ -17,6 +17,7 @@ data class AddReadingState(
     val selectedSpread: Spread? = null,
     val cards: List<Card> = emptyList(),
     val assignedCards: Map<Int, Card> = emptyMap(),
+    val reversedPositions: Set<Int> = emptySet(),
     val title: String = "",
     val notes: String = "",
     val isLoading: Boolean = false,

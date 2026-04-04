@@ -28,6 +28,8 @@ fun CardAssignmentStep(
     spread: Spread,
     assignedCards: Map<Int, Card>,
     onPositionCardSelected: (positionOrder: Int, Card) -> Unit,
+    reversedPositions: Set<Int> = emptySet(),
+    onToggleReversed: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showCardPicker by remember { mutableStateOf(false) }
@@ -38,7 +40,7 @@ fun CardAssignmentStep(
     val totalCount = positions.size
 
     androidx.compose.foundation.layout.Column(
-        modifier = modifier.padding(16.dp)
+        modifier = modifier.padding(horizontal = 24.dp, vertical = 12.dp)
     ) {
         // Progress indicator
         Text(
@@ -53,12 +55,12 @@ fun CardAssignmentStep(
             text = spread.name,
             style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
         // Position slots
         androidx.compose.foundation.lazy.LazyColumn(
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
         ) {
             items(positions.size) { index ->
                 val position = positions[index]
@@ -72,7 +74,9 @@ fun CardAssignmentStep(
                     onTap = {
                         selectedPositionOrder = position.order
                         showCardPicker = true
-                    }
+                    },
+                    isReversed = reversedPositions.contains(position.order),
+                    onToggleReversed = onToggleReversed?.let { { it(position.order) } }
                 )
             }
         }

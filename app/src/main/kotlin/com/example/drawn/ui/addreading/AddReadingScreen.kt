@@ -21,6 +21,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,7 +100,9 @@ fun AddReadingScreen(
                                         assignedCards = state.assignedCards,
                                         onPositionCardSelected = { positionOrder, card ->
                                             viewModel.assignCard(positionOrder, card)
-                                        }
+                                        },
+                                        reversedPositions = state.reversedPositions,
+                                        onToggleReversed = { viewModel.togglePositionReversed(it) }
                                     )
                                 }
                             }
@@ -143,8 +148,10 @@ fun AddReadingScreen(
             }
 
             is AddReadingUiState.Saved -> {
-                // Navigation happens on save success
-                onNavigateBack()
+                SideEffect {
+                    viewModel.reset()
+                    onNavigateBack()
+                }
             }
 
             is AddReadingUiState.Error -> {
