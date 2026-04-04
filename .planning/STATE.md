@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-testing-ci-01-PLAN.md
-last_updated: "2026-04-04T17:16:02.511Z"
+stopped_at: Completed 04-testing-ci-02-PLAN.md
+last_updated: "2026-04-04T17:40:45.838Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
   percent: 71
 ---
 
@@ -60,6 +60,7 @@ Progress: [███████░░░] 71% (10/14 plans complete)
 | Phase 03-enrichment-polish P04 | 5min | 2 tasks | 6 files |
 | Phase 03-enrichment-polish P05 | 15min | 2 tasks | 6 files |
 | Phase 04-testing-ci P01 | 15min | 3 tasks | 6 files |
+| Phase 04-testing-ci P02 | 15min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 04-testing-ci]: Used direct uiState.value assertions instead of Turbine for StateFlow testing — simpler, avoids coroutine timing issues with WhileSubscribed sharing
 - [Phase 04-testing-ci]: Disabled addPhoto test in ReadingDetailViewModelTest — requires Android framework (Uri.parse, ContentResolver) not available in pure unit tests
 - [Phase 04-testing-ci]: Added junit-platform-launcher runtime dependency — required for JUnit 5 test execution with Gradle 9.x
+- [Phase 04-testing-ci]: Used apter-tech/junit5-robolectric-extension (tech.apter.junit5.jupiter:robolectric-extension v0.9.0) instead of non-existent org.robolectric:junit5 — Robolectric has no official JUnit5 extension
+- [Phase 04-testing-ci]: Parent entities (DeckEntity, SpreadEntity, ReadingEntity) inserted via runBlocking in @BeforeEach to satisfy foreign key constraints in DAO tests
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T17:16:02.509Z
-Stopped at: Completed 04-testing-ci-01-PLAN.md
+Last session: 2026-04-04T17:40:45.836Z
+Stopped at: Completed 04-testing-ci-02-PLAN.md
 Resume file: None
