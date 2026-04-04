@@ -13,6 +13,9 @@ interface SpreadDao {
     fun observeAllSpreads(): Flow<List<SpreadEntity>>
 
     @Query("SELECT * FROM spreads WHERE id = :id")
+    fun observeSpreadById(id: Long): Flow<SpreadEntity?>
+
+    @Query("SELECT * FROM spreads WHERE id = :id")
     fun getSpreadById(id: Long): SpreadEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

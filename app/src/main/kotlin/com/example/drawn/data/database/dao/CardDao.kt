@@ -18,6 +18,12 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE deckId = :deckId ORDER BY number")
     fun observeCardsByDeck(deckId: Long): Flow<List<CardEntity>>
 
+    @Query("SELECT * FROM cards WHERE id IN (:ids)")
+    fun observeCardsByIds(ids: List<Long>): Flow<List<CardEntity>>
+
+    @Query("SELECT * FROM cards WHERE id IN (:ids)")
+    suspend fun getCardsByIds(ids: List<Long>): List<CardEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(cards: List<CardEntity>)
 }

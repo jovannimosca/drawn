@@ -29,8 +29,10 @@ object RepositoryModule {
     fun provideReadingRepository(
         readingDao: ReadingDao,
         readingCardDao: ReadingCardDao,
-        readingPhotoDao: ReadingPhotoDao
-    ): ReadingRepository = ReadingRepository(readingDao, readingCardDao, readingPhotoDao)
+        readingPhotoDao: ReadingPhotoDao,
+        cardDao: CardDao,
+        spreadDao: SpreadDao
+    ): ReadingRepository = ReadingRepository(readingDao, readingCardDao, readingPhotoDao, cardDao, spreadDao)
 
     @Provides
     fun provideSpreadRepository(

@@ -74,7 +74,7 @@ class ReadingDetailViewModel @Inject constructor(
                     title = updatedTitle,
                     notes = updatedNotes
                 )
-                readingRepository.updateReading(updatedReading, detail.cards)
+                readingRepository.updateReading(updatedReading, detail.cards.map { it.readingCard })
                 _isEditMode.value = false
             }
         }

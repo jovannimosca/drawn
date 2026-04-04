@@ -62,8 +62,9 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.example.drawn.domain.model.ReadingCard
+import com.example.drawn.domain.model.ReadingCardWithDetails
 import com.example.drawn.domain.model.ReadingPhoto
+import com.example.drawn.ui.addreading.CardThumbnail
 import com.example.drawn.ui.theme.DarkOnSecondary
 import com.example.drawn.ui.theme.DarkPrimary
 import com.example.drawn.ui.theme.DarkSecondary
@@ -384,7 +385,7 @@ private fun ReadingDetailContent(
     modifier: Modifier = Modifier
 ) {
     val reading = detail.reading
-    val cards = detail.cards.sortedBy { it.positionOrder }
+    val cards = detail.cards.sortedBy { it.readingCard.positionOrder }
 
     Column(
         modifier = modifier
@@ -392,16 +393,23 @@ private fun ReadingDetailContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // Spread name / reading title as section header (title is in TopAppBar when edit mode)
-        if (!isEditMode) {
-            Text(
-                text = reading.title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        // Spread name as section header
+        Text(
+            text = detail.spreadName,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Reading title
+        Text(
+            text = reading.title,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Cards in position order
         Text(
@@ -412,9 +420,9 @@ private fun ReadingDetailContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        for (card in cards) {
+        for (cardWithDetails in cards) {
             ReadingDetailCardItem(
-                readingCard = card,
+                readingCardWithDetails = cardWithDetails,
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -524,56 +532,34 @@ private fun ReadingDetailContent(
 
 @Composable
 private fun ReadingDetailCardItem(
-    readingCard: ReadingCard,
+    readingCardWithDetails: ReadingCardWithDetails,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.material3.Surface(
-        color = DarkSurface,
-        shape = MaterialTheme.shapes.medium,
-        modifier = modifier
-    ) {
-        Box(modifier = Modifier.padding(12.dp)) {
-            Column {
-                Text(
-                    text = readingCard.positionName,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = readingCard.cardId.toString(), // Show card ID since we don't have Card lookup
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.graphicsLayer {
-                        rotationZ = if (readingCard.isReversed) 180f else 0f
-                    }
-                )
-                if (readingCard.interpretation != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = readingCard.interpretation,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+    val readingCard = readingCardWithDetails.readingCard
+    val card = readingCardWithDetails.card
 
-            if (readingCard.isReversed) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(16.dp)
-                        .background(DarkSecondary, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "R",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = DarkOnSecondary,
-                        fontSize = 8.sp
-                    )
-                }
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = readingCard.positionName,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        CardThumbnail(
+            card = card,
+            modifier = Modifier.graphicsLayer {
+                rotationZ = if (readingCard.isReversed) 180f else 0f
             }
+        )
+        if (readingCard.interpretation != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = readingCard.interpretation,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
