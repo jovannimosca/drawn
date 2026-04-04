@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.drawn.data.repository.ReadingRepository
 import com.example.drawn.domain.model.Reading
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -17,7 +19,27 @@ class ReadingListViewModel @Inject constructor(
     private val readingRepository: ReadingRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<ReadingListUiState> = readingRepository.observeAllReadings()
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
+
+    val uiState: StateFlow<ReadingListUiState> = combine(
+        readingRepository.observeAllReadings(),
+        searchQuery
+    ) { readings, query ->
+        if (query.isBlank()) {
+            readings
+        } else {
+            val lowerQuery = query.lowercase()
+            readings.filter { reading ->
+                reading.title.lowercase().contains(lowerQuery) ||
+                    (reading.notes?.lowercase()?.contains(lowerQuery) == true)
+            }
+        }
+    }
         .map { readings -> ReadingListUiState.Success(readings) as ReadingListUiState }
         .catch { error ->
             emit(ReadingListUiState.Error(error.message ?: "Unknown error"))
