@@ -40,8 +40,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Theme & Visual
 
-- [ ] **THEME-01**: App uses a dark mystical theme (dark purples, golds, starry aesthetics)
-- [ ] **THEME-02**: All screens are visually consistent with the theme
+- [x] **THEME-01**: App uses a dark mystical theme (dark purples, golds, starry aesthetics)
+- [x] **THEME-02**: All screens are visually consistent with the theme
 
 ### Testing & Quality
 
@@ -118,8 +118,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PHOTO-02 | Phase 3 | Pending |
 | PHOTO-03 | Phase 3 | Pending |
 | PHOTO-04 | Phase 3 | Pending |
-| THEME-01 | Phase 3 | Pending |
-| THEME-02 | Phase 3 | Pending |
+| THEME-01 | Phase 3 | Complete |
+| THEME-02 | Phase 3 | Complete |
 | TEST-01 | Phase 4 | Pending |
 | TEST-02 | Phase 4 | Pending |
 | TEST-03 | Phase 4 | Pending |
