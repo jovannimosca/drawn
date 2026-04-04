@@ -88,7 +88,8 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- ReadingDetailViewModel SavedStateHandle issue fixed — now uses setReadingId() + LaunchedEffect pattern
+- Quick task: Photo attachments added to wizard NotesAndSave step — matches ReadingDetailScreen UX
 
 ## Session Continuity
 
