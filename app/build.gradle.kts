@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
+    alias(libs.plugins.robolectric.junit5.gradle.plugin)
 }
 
 android {
@@ -99,7 +100,10 @@ dependencies {
     testImplementation(libs.hilt.android.testing)
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
+    testImplementation(libs.robolectric.junit5)
+    testImplementation(libs.androidx.junit)
     testImplementation(libs.room.testing)
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.11.4")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
     androidTestImplementation(libs.androidx.junit)
