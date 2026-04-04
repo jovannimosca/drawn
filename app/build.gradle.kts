@@ -95,6 +95,7 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit) // JUnit4 for @Rule annotation (Compose UI tests)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.hilt.android.testing)
