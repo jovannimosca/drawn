@@ -8,16 +8,20 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -156,17 +161,7 @@ fun ReadingDetailScreen(
             }
             TopAppBar(
                 title = {
-                    if (isEditMode) {
-                        OutlinedTextField(
-                            value = editedTitle,
-                            onValueChange = { editedTitle = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Title") },
-                            singleLine = true
-                        )
-                    } else {
-                        Text(title)
-                    }
+                    Text(if (isEditMode) "Edit Reading" else "Reading Details")
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -178,15 +173,23 @@ fun ReadingDetailScreen(
                 },
                 actions = {
                     if (isEditMode) {
-                        TextButton(onClick = { viewModel.exitEditMode() }) {
-                            Text("Discard Changes", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        IconButton(onClick = { viewModel.exitEditMode() }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Discard Changes",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        TextButton(
+                        IconButton(
                             onClick = {
-                                viewModel.saveReading(editedTitle, editedNotes.takeIf { it.isNotBlank() })
+                                viewModel.saveReading(editedTitle, editedNotes)
                             }
                         ) {
-                            Text("Save Changes", color = DarkPrimary)
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = "Save Changes",
+                                tint = DarkPrimary
+                            )
                         }
                     } else {
                         IconButton(onClick = { viewModel.toggleEditMode() }) {
@@ -240,7 +243,9 @@ fun ReadingDetailScreen(
                 ReadingDetailContent(
                     detail = detail,
                     isEditMode = isEditMode,
+                    editedTitle = editedTitle,
                     editedNotes = editedNotes,
+                    onTitleChange = { editedTitle = it },
                     onNotesChange = { editedNotes = it },
                     onAddPhotoClick = { showAddPhotoSheet = true },
                     onPhotoTap = { photo -> showPhotoViewer = photo },
@@ -323,8 +328,13 @@ fun ReadingDetailScreen(
                         .background(Color.Black),
                     contentAlignment = Alignment.Center
                 ) {
+                    val imageModel = if (photo.photoUri.startsWith("/")) {
+                        java.io.File(photo.photoUri)
+                    } else {
+                        photo.photoUri
+                    }
                     AsyncImage(
-                        model = photo.photoUri,
+                        model = imageModel,
                         contentDescription = "Full screen photo",
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxSize()
@@ -332,14 +342,31 @@ fun ReadingDetailScreen(
                     IconButton(
                         onClick = { showPhotoViewer = null },
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
+                            .align(Alignment.TopStart)
                             .padding(8.dp)
                     ) {
                         Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Close",
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
                             tint = Color.White
                         )
+                    }
+                    if (isEditMode) {
+                        IconButton(
+                            onClick = {
+                                showPhotoViewer = null
+                                showDeletePhotoDialog = photo
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete photo",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -378,7 +405,9 @@ fun ReadingDetailScreen(
 private fun ReadingDetailContent(
     detail: com.example.drawn.domain.model.ReadingDetail,
     isEditMode: Boolean,
+    editedTitle: String,
     editedNotes: String,
+    onTitleChange: (String) -> Unit,
     onNotesChange: (String) -> Unit,
     onAddPhotoClick: () -> Unit,
     onPhotoTap: (ReadingPhoto) -> Unit,
@@ -388,151 +417,170 @@ private fun ReadingDetailContent(
     val reading = detail.reading
     val cards = detail.cards.sortedBy { it.readingCard.positionOrder }
 
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // Spread name as section header
-        Text(
-            text = detail.spreadName,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Spread name
+        item {
+            Text(
+                text = detail.spreadName,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            if (isEditMode) {
+                OutlinedTextField(
+                    value = editedTitle,
+                    onValueChange = onTitleChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Title") },
+                    singleLine = true
+                )
+            } else {
+                Text(
+                    text = reading.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Cards",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        // Cards grid (3 columns, equal width)
+        item {
+            val columns = 3
+            cards.chunked(columns).forEach { rowCards ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    rowCards.forEach { cardWithDetails ->
+                        ReadingDetailCardItem(
+                            readingCardWithDetails = cardWithDetails,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    // Fill remaining space if last row has fewer than 3 cards
+                    repeat(columns - rowCards.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
 
-        // Reading title
-        Text(
-            text = reading.title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // Notes
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Notes",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Cards in position order
-        Text(
-            text = "Cards",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 120.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(cards, key = { it.readingCard.positionOrder }) { cardWithDetails ->
-                ReadingDetailCardItem(
-                    readingCardWithDetails = cardWithDetails
+        item {
+            if (isEditMode) {
+                OutlinedTextField(
+                    value = editedNotes,
+                    onValueChange = onNotesChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Notes") },
+                    minLines = 3
+                )
+            } else {
+                Text(
+                    text = "No notes",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Notes section
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Notes",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (isEditMode) {
-            OutlinedTextField(
-                value = editedNotes,
-                onValueChange = onNotesChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Notes") },
-                minLines = 3
-            )
-        } else {
+        // Photos
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = reading.notes ?: "No notes",
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (reading.notes != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                text = "Photos",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Photos section
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Photos",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val photos = detail.photos
-        LazyHorizontalGrid(
-            rows = GridCells.Fixed(1),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 4.dp),
-            modifier = Modifier.height(80.dp)
-        ) {
-            // "+" add button
-            item {
-                Card(
-                    onClick = onAddPhotoClick,
-                    colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                    modifier = Modifier.size(80.dp)
+            val photos = detail.photos
+            if (photos.isEmpty()) {
+                Text(
+                    text = if (isEditMode) "Tap + to add photos" else "No photos attached",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                LazyHorizontalGrid(
+                    rows = GridCells.Fixed(1),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                    modifier = Modifier.height(80.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add photo",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    if (isEditMode) {
+                        item {
+                            Card(
+                                onClick = onAddPhotoClick,
+                                colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
+                                modifier = Modifier.size(80.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = "Add photo",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    items(photos, key = { it.id }) { photo ->
+                        Card(
+                            onClick = { onPhotoTap(photo) },
+                            modifier = Modifier.size(80.dp)
+                        ) {
+                            val imageModel = if (photo.photoUri.startsWith("/")) {
+                                java.io.File(photo.photoUri)
+                            } else {
+                                photo.photoUri
+                            }
+                            AsyncImage(
+                                model = imageModel,
+                                contentDescription = "Reading photo",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }
-
-            // Photo thumbnails
-            items(photos, key = { it.id }) { photo ->
-                Card(
-                    onClick = { onPhotoTap(photo) },
-                    modifier = Modifier
-                        .size(80.dp)
-                        .combinedClickable(
-                            onClick = { onPhotoTap(photo) },
-                            onLongClick = { onPhotoLongPress(photo) }
-                        )
-                ) {
-                    AsyncImage(
-                        model = photo.photoUri,
-                        contentDescription = "Reading photo",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-        }
-
-        // Photo empty hint
-        if (photos.isEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Tap + to add photos",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
 
         // Date
-        Spacer(modifier = Modifier.height(16.dp))
-        val formattedDate = java.time.format.DateTimeFormatter
-            .ofPattern("MMM d, yyyy")
-            .format(reading.createdAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate())
-        Text(
-            text = formattedDate,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            val formattedDate = java.time.format.DateTimeFormatter
+                .ofPattern("MMM d, yyyy")
+                .format(reading.createdAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+            Text(
+                text = formattedDate,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

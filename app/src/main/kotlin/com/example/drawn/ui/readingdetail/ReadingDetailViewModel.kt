@@ -1,16 +1,21 @@
 package com.example.drawn.ui.readingdetail
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.drawn.data.repository.ReadingRepository
 import com.example.drawn.domain.model.ReadingDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.UUID
 import javax.inject.Inject
 
 sealed interface ReadingDetailUiState {
@@ -21,7 +26,8 @@ sealed interface ReadingDetailUiState {
 
 @HiltViewModel
 class ReadingDetailViewModel @Inject constructor(
-    private val readingRepository: ReadingRepository
+    private val readingRepository: ReadingRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private var readingId: Long = -1L
@@ -86,9 +92,27 @@ class ReadingDetailViewModel @Inject constructor(
         }
     }
 
-    fun addPhoto(photoUri: String) {
+    fun addPhoto(uriString: String) {
         viewModelScope.launch {
-            readingRepository.addPhotoToReading(readingId, photoUri)
+            try {
+                val uri = Uri.parse(uriString)
+                val contentResolver = context.contentResolver
+                val inputStream = contentResolver.openInputStream(uri)
+                if (inputStream != null) {
+                    val photosDir = File(context.filesDir, "reading_photos").also { it.mkdirs() }
+                    val fileName = "photo_${UUID.randomUUID()}.jpg"
+                    val destFile = File(photosDir, fileName)
+                    inputStream.use { input ->
+                        destFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    readingRepository.addPhotoToReading(readingId, destFile.absolutePath)
+                }
+            } catch (e: Exception) {
+                // If copy fails, fall back to storing the original URI
+                readingRepository.addPhotoToReading(readingId, uriString)
+            }
         }
     }
 
