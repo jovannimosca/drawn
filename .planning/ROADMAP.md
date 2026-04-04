@@ -85,7 +85,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Kover coverage config + ViewModel unit tests (AddReading, ReadingList, ReadingDetail)
+- [x] 04-01-PLAN.md — Kover coverage config + ViewModel unit tests (AddReading, ReadingList, ReadingDetail)
 - [ ] 04-02-PLAN.md — DAO tests (Room in-memory) + Repository tests (mocked DAOs)
 - [ ] 04-03-PLAN.md — Compose UI tests + CI workflow with coverage gates
 
@@ -99,4 +99,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundation & Dev Environment | 0/0 | Not started | - |
 | 2. Core Recording Loop | 1/4 | In Progress|  |
 | 3. Enrichment & Polish | 5/5 | Complete   | 2026-04-04 |
-| 4. Testing & CI | 0/0 | Not started | - |
+| 4. Testing & CI | 1/3 | In Progress|  |

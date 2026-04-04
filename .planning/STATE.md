@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 03-enrichment-polish-05-PLAN.md
-last_updated: "2026-04-04T03:02:48.525Z"
+stopped_at: Completed 04-testing-ci-01-PLAN.md
+last_updated: "2026-04-04T17:16:02.511Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 17
+  completed_plans: 15
   percent: 71
 ---
 
@@ -59,6 +59,7 @@ Progress: [███████░░░] 71% (10/14 plans complete)
 | Phase 03-enrichment-polish P03 | 5min | 2 tasks | 2 files |
 | Phase 03-enrichment-polish P04 | 5min | 2 tasks | 6 files |
 | Phase 03-enrichment-polish P05 | 15min | 2 tasks | 6 files |
+| Phase 04-testing-ci P01 | 15min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 03-enrichment-polish]: Local state for edited values synced when entering edit mode — no need for separate draft state in ViewModel
 - [Phase 03-enrichment-polish]: Used combinedClickable (onDoubleClick) instead of detectTapGestures to avoid conflicts with Card's onClick for reversed toggle
 - [Phase 03-enrichment-polish]: Used combinedClickable (onLongClick) instead of detectLongPressGestures for photo long-press delete — detectLongPressGestures not available in current Compose Foundation version
+- [Phase 04-testing-ci]: Used direct uiState.value assertions instead of Turbine for StateFlow testing — simpler, avoids coroutine timing issues with WhileSubscribed sharing
+- [Phase 04-testing-ci]: Disabled addPhoto test in ReadingDetailViewModelTest — requires Android framework (Uri.parse, ContentResolver) not available in pure unit tests
+- [Phase 04-testing-ci]: Added junit-platform-launcher runtime dependency — required for JUnit 5 test execution with Gradle 9.x
 
 ### Pending Todos
 
@@ -93,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T03:02:48.524Z
-Stopped at: Completed 03-enrichment-polish-05-PLAN.md
+Last session: 2026-04-04T17:16:02.509Z
+Stopped at: Completed 04-testing-ci-01-PLAN.md
 Resume file: None
