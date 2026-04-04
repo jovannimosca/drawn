@@ -15,7 +15,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **READ-04**: User can view full reading details including spread layout, assigned cards, notes, and photos
 - [ ] **READ-05**: User can edit an existing reading
 - [ ] **READ-06**: User can delete a reading
-- [ ] **READ-07**: User can search past readings by notes, card names, or date
+- [x] **READ-07**: User can search past readings by notes, card names, or date
 
 ### Spread Management
 
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | READ-04 | Phase 2 | Complete |
 | READ-05 | Phase 3 | Pending |
 | READ-06 | Phase 3 | Pending |
-| READ-07 | Phase 3 | Pending |
+| READ-07 | Phase 3 | Complete |
 | SPRD-01 | Phase 2 | Complete |
 | SPRD-02 | Phase 2 | Complete |
 | SPRD-03 | Phase 2 | Complete |
