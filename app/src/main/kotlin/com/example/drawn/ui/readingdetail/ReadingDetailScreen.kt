@@ -2,7 +2,6 @@ package com.example.drawn.ui.readingdetail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,22 +11,32 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.drawn.domain.model.ReadingCard
+import com.example.drawn.ui.theme.DarkPrimary
 import com.example.drawn.ui.theme.DarkSurface
 import com.example.drawn.ui.theme.DarkSurfaceVariant
 
@@ -51,6 +60,23 @@ fun ReadingDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
+
+    // Edit field local state
+    var editedTitle by remember { mutableStateOf("") }
+    var editedNotes by remember { mutableStateOf("") }
+
+    // Delete confirmation dialog state
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Sync edited values when entering edit mode
+    if (isEditMode) {
+        val currentState = uiState
+        if (currentState is ReadingDetailUiState.Success) {
+            editedTitle = currentState.detail.reading.title
+            editedNotes = currentState.detail.reading.notes ?: ""
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -59,13 +85,46 @@ fun ReadingDetailScreen(
                 else -> "Reading Detail"
             }
             TopAppBar(
-                title = { Text(title) },
+                title = {
+                    if (isEditMode) {
+                        OutlinedTextField(
+                            value = editedTitle,
+                            onValueChange = { editedTitle = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Title") },
+                            singleLine = true
+                        )
+                    } else {
+                        Text(title)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
+                    }
+                },
+                actions = {
+                    if (isEditMode) {
+                        TextButton(onClick = { viewModel.exitEditMode() }) {
+                            Text("Discard Changes", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        TextButton(
+                            onClick = {
+                                viewModel.saveReading(editedTitle, editedNotes.takeIf { it.isNotBlank() })
+                            }
+                        ) {
+                            Text("Save Changes", color = DarkPrimary)
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.toggleEditMode() }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit reading")
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete reading")
+                        }
                     }
                 }
             )
@@ -78,7 +137,7 @@ fun ReadingDetailScreen(
                         .fillMaxSize()
                         .padding(padding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                    verticalArrangement = Arrangement.Center
                 ) {
                     CircularProgressIndicator()
                 }
@@ -91,7 +150,7 @@ fun ReadingDetailScreen(
                         .fillMaxSize()
                         .padding(padding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         text = "Something went wrong",
@@ -110,9 +169,38 @@ fun ReadingDetailScreen(
                 val detail = (uiState as ReadingDetailUiState.Success).detail
                 ReadingDetailContent(
                     detail = detail,
+                    isEditMode = isEditMode,
+                    editedNotes = editedNotes,
+                    onNotesChange = { editedNotes = it },
                     modifier = Modifier.padding(padding)
                 )
             }
+        }
+
+        // Delete confirmation dialog
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("Delete reading?") },
+                text = { Text("This will permanently delete this reading and all attached photos. This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteReading()
+                            showDeleteDialog = false
+                            onNavigateBack()
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Keep Reading")
+                    }
+                }
+            )
         }
     }
 }
@@ -120,6 +208,9 @@ fun ReadingDetailScreen(
 @Composable
 private fun ReadingDetailContent(
     detail: com.example.drawn.domain.model.ReadingDetail,
+    isEditMode: Boolean,
+    editedNotes: String,
+    onNotesChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val reading = detail.reading
@@ -131,14 +222,16 @@ private fun ReadingDetailContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // Spread name / reading title as section header
-        Text(
-            text = reading.title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // Spread name / reading title as section header (title is in TopAppBar when edit mode)
+        if (!isEditMode) {
+            Text(
+                text = reading.title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Cards in position order
         Text(
@@ -157,19 +250,28 @@ private fun ReadingDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Notes section (if present)
-        reading.notes?.let { notes ->
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Notes",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        // Notes section
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Notes",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (isEditMode) {
+            OutlinedTextField(
+                value = editedNotes,
+                onValueChange = onNotesChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Notes") },
+                minLines = 3
             )
-            Spacer(modifier = Modifier.height(8.dp))
+        } else {
             Text(
-                text = notes,
+                text = reading.notes ?: "No notes",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (reading.notes != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
