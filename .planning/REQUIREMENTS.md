@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CARD-01**: App includes all 78 Rider-Waite-Smith cards (22 Major Arcana, 56 Minor Arcana)
 - [x] **CARD-02**: User can browse and select cards from a visual grid/list when assigning to positions
 - [x] **CARD-03**: Card images are bundled in the app and work offline
-- [ ] **CARD-04**: User can toggle reversed/upright orientation for each card in a reading
+- [x] **CARD-04**: User can toggle reversed/upright orientation for each card in a reading
 
 ### Photo Attachments
 
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CARD-01 | Phase 2 | Complete |
 | CARD-02 | Phase 2 | Complete |
 | CARD-03 | Phase 2 | Complete |
-| CARD-04 | Phase 3 | Pending |
+| CARD-04 | Phase 3 | Complete |
 | PHOTO-01 | Phase 3 | Pending |
 | PHOTO-02 | Phase 3 | Pending |
 | PHOTO-03 | Phase 3 | Pending |

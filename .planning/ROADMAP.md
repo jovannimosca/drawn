@@ -70,7 +70,7 @@ Plans:
 - [x] 03-01-PLAN.md — Dark theme foundation: typography scale, complete M3 color scheme, card elevation
 - [x] 03-02-PLAN.md — Search bar in ReadingListScreen with real-time filtering by title, notes, spread name
 - [x] 03-03-PLAN.md — Inline edit and delete on ReadingDetailScreen with confirmation dialogs
-- [ ] 03-04-PLAN.md — Reversed card toggle on position slots with 180° rotation and gold "R" badge
+- [x] 03-04-PLAN.md — Reversed card toggle on position slots with 180° rotation and gold "R" badge
 - [ ] 03-05-PLAN.md — Photo attachments: gallery/camera picker, grid display, full-screen viewer, delete
 
 ### Phase 4: Testing & CI
@@ -93,5 +93,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Dev Environment | 0/0 | Not started | - |
 | 2. Core Recording Loop | 1/4 | In Progress|  |
-| 3. Enrichment & Polish | 3/5 | In Progress|  |
+| 3. Enrichment & Polish | 4/5 | In Progress|  |
 | 4. Testing & CI | 0/0 | Not started | - |

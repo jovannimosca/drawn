@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-enrichment-polish-03-PLAN.md
-last_updated: "2026-04-04T02:48:47.521Z"
+stopped_at: Completed 03-enrichment-polish-04-PLAN.md
+last_updated: "2026-04-04T02:55:59.435Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
   percent: 71
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 3
-Plan: 4 of 5 complete
+Plan: 5 of 5 complete
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 71% (10/14 plans complete)
 | Phase 03-enrichment-polish P01 | 5 minutes | 3 tasks | 3 files |
 | Phase 03-enrichment-polish P02 | 5min | 2 tasks | 2 files |
 | Phase 03-enrichment-polish P03 | 5min | 2 tasks | 2 files |
+| Phase 03-enrichment-polish P04 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 03-enrichment-polish]: Title OutlinedTextField placed in TopAppBar title slot during edit mode — keeps save/cancel buttons in actions
 - [Phase 03-enrichment-polish]: Notes always shown with No notes placeholder instead of conditional rendering — simplifies edit mode UX
 - [Phase 03-enrichment-polish]: Local state for edited values synced when entering edit mode — no need for separate draft state in ViewModel
+- [Phase 03-enrichment-polish]: Used combinedClickable (onDoubleClick) instead of detectTapGestures to avoid conflicts with Card's onClick for reversed toggle
 
 ### Pending Todos
 
@@ -88,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T02:48:47.520Z
-Stopped at: Completed 03-enrichment-polish-03-PLAN.md
+Last session: 2026-04-04T02:55:59.433Z
+Stopped at: Completed 03-enrichment-polish-04-PLAN.md
 Resume file: None
