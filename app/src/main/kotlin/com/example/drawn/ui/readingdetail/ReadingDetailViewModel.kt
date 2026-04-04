@@ -3,15 +3,13 @@ package com.example.drawn.ui.readingdetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.drawn.data.repository.ReadingRepository
-import com.example.drawn.domain.model.ReadingCard
 import com.example.drawn.domain.model.ReadingDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,28 +21,37 @@ sealed interface ReadingDetailUiState {
 
 @HiltViewModel
 class ReadingDetailViewModel @Inject constructor(
-    private val readingRepository: ReadingRepository,
-    savedStateHandle: androidx.lifecycle.SavedStateHandle
+    private val readingRepository: ReadingRepository
 ) : ViewModel() {
 
-    private val readingId: Long = savedStateHandle["readingId"] ?: -1L
+    private var readingId: Long = -1L
+    private var collectionJob: Job? = null
 
-    val uiState: StateFlow<ReadingDetailUiState> = readingRepository.observeReadingWithDetails(readingId)
-        .map { detail ->
-            if (detail != null) {
-                ReadingDetailUiState.Success(detail)
-            } else {
-                ReadingDetailUiState.Error("Reading not found")
-            }
+    private val _uiState = MutableStateFlow<ReadingDetailUiState>(ReadingDetailUiState.Loading)
+    val uiState: StateFlow<ReadingDetailUiState> = _uiState
+
+    fun setReadingId(id: Long) {
+        if (readingId == id) return
+        readingId = id
+        collectionJob?.cancel()
+        _uiState.value = ReadingDetailUiState.Loading
+        collectionJob = viewModelScope.launch {
+            readingRepository.observeReadingWithDetails(readingId)
+                .map { detail ->
+                    if (detail != null) {
+                        ReadingDetailUiState.Success(detail)
+                    } else {
+                        ReadingDetailUiState.Error("Reading not found")
+                    }
+                }
+                .catch { error ->
+                    emit(ReadingDetailUiState.Error(error.message ?: "Unknown error"))
+                }
+                .collect { state ->
+                    _uiState.value = state
+                }
         }
-        .catch { error ->
-            emit(ReadingDetailUiState.Error(error.message ?: "Unknown error"))
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ReadingDetailUiState.Loading
-        )
+    }
 
     // Edit mode state
     private val _isEditMode = MutableStateFlow(false)

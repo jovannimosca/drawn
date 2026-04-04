@@ -10,6 +10,7 @@ import com.example.drawn.data.database.dao.ReadingCardDao
 import com.example.drawn.data.database.dao.ReadingDao
 import com.example.drawn.data.database.dao.ReadingPhotoDao
 import com.example.drawn.data.database.dao.SpreadDao
+import com.example.drawn.data.database.migration.MIGRATION_1_2
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,6 +33,7 @@ object DatabaseModule {
     )
         .createFromAsset("database/drawn_prepopulated.db")
         .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+        .addMigrations(MIGRATION_1_2)
         .build()
 
     @Provides

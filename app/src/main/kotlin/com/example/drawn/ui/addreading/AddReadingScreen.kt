@@ -111,9 +111,12 @@ fun AddReadingScreen(
                                 NotesAndSaveStep(
                                     title = state.title,
                                     notes = state.notes,
+                                    photoUris = state.photoUris,
                                     isSaving = false,
                                     onTitleChange = { viewModel.updateTitle(it) },
                                     onNotesChange = { viewModel.updateNotes(it) },
+                                    onAddPhoto = { viewModel.addPhoto(it) },
+                                    onRemovePhoto = { viewModel.removePhoto(it) },
                                     onSave = { viewModel.saveReading() }
                                 )
                             }

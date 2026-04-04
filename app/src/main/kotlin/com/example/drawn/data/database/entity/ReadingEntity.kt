@@ -2,6 +2,7 @@ package com.example.drawn.data.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.drawn.domain.model.Reading
 import java.time.Instant
@@ -15,7 +16,8 @@ import java.time.Instant
             childColumns = ["spreadId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index("spreadId")]
 )
 data class ReadingEntity(
     @PrimaryKey(autoGenerate = true)

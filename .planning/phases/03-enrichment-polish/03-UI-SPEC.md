@@ -58,11 +58,9 @@ M3 default `Typography()` is currently used (`Type.kt` is empty). This phase def
 |------|-----------|--------|-------------|-------|
 | Display | `displayLarge` (~57.sp) | 400 | 1.12 | Empty state icon replacement (✨ → mystical symbol) |
 | Heading | `headlineSmall` (~24.sp) | 400 | 1.33 | Reading title in detail, section headers ("Cards", "Notes", "Photos") |
-| Title | `titleMedium` (~16.sp) | 400 | 1.50 | Reading list item titles, position names, card names |
-| Body | `bodyLarge` (~16.sp) | 400 | 1.50 | Reading notes, search result descriptions |
-| Body secondary | `bodyMedium` (~14.sp) | 400 | 1.43 | Date stamps, position meanings, helper text |
-| Label | `labelLarge` (~14.sp) | 500 | 1.43 | Section labels, photo captions, search placeholder |
-| Label small | `labelSmall` (~11.sp) | 400 | 1.33 | "Tap to select" hints, reversed badge text |
+| Body | `bodyLarge` (~16.sp) | 400 | 1.50 | Reading list item titles, reading notes, position names, card names |
+| Label | `bodyMedium` (~14.sp) | 400 | 1.43 | Date stamps, position meanings, helper text, "Tap to select" hints, search placeholder, photo captions |
+| Label emphasis | `labelLarge` (~14.sp) | 500 | 1.43 | Section labels, reversed badge text |
 
 **Weights:** Exactly 2 weights used across the app — **400 (regular)** for all body/heading text, **500 (medium)** for labels only. No bold (700) or semibold (600) — the dark theme achieves hierarchy through color and size, not weight.
 
@@ -117,14 +115,14 @@ M3 default `Typography()` is currently used (`Type.kt` is empty). This phase def
 | Delete confirmation dialog title | "Delete reading?" |
 | Delete confirmation dialog body | "This will permanently delete this reading and all attached photos. This action cannot be undone." |
 | Delete confirmation confirm button | "Delete" (in DarkError color) |
-| Delete confirmation dismiss button | "Cancel" |
 | Search placeholder | "Search readings…" (with ellipsis character U+2026) |
 | Photo section header | "Photos" |
 | Photo empty hint | "Tap + to add photos" |
-| Edit mode save button | "Save" |
-| Edit mode cancel button | "Cancel" |
+| Edit mode save button | "Save Changes" |
+| Edit mode cancel button | "Discard Changes" |
 | Reversed badge text | "R" |
 | Photo viewer delete confirmation | "Remove photo?" / "This photo will be removed from this reading." / "Remove" |
+| Delete confirmation dismiss button | "Keep Reading" |
 
 **Source:** D-44 (confirmation dialog before delete), D-46 (search bar in reading list), D-52 (reversed visual indicator). All copy uses sentence case, no ALL CAPS.
 
@@ -244,11 +242,11 @@ No shadcn, no third-party registries. This is a native Android app.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED — 2026-04-03

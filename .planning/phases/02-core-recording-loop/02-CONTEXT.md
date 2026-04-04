@@ -40,8 +40,8 @@ This phase does NOT add:
 
 ### Reading Title
 - **D-20:** Auto-generated from spread name + date, e.g. "Celtic Cross — Apr 3, 2026"
-- **D-21:** User does not need to manually enter a title
-- **D-22:** Title is generated at save time, not editable in v1
+- **D-21:** Title is pre-populated but editable — user can modify before saving
+- **D-22:** Title field appears in Step 3 (notes + save), shown above the notes field
 
 ### Interpretations
 - **D-23:** Notes only at the end — one freeform text field for the whole reading

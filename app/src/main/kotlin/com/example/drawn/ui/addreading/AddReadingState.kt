@@ -20,6 +20,7 @@ data class AddReadingState(
     val reversedPositions: Set<Int> = emptySet(),
     val title: String = "",
     val notes: String = "",
+    val photoUris: List<String> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 ) {

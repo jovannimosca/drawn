@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "465f6a6d516dc245dddbea03c5d31a60",
+    "identityHash": "7e4d453b22b5ae9eaea9e8b181b45be8",
     "entities": [
       {
         "tableName": "decks",
@@ -211,6 +211,17 @@
             "id"
           ]
         },
+        "indices": [
+          {
+            "name": "index_readings_spreadId",
+            "unique": false,
+            "columnNames": [
+              "spreadId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_readings_spreadId` ON `${TABLE_NAME}` (`spreadId`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "spreads",
@@ -384,7 +395,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '465f6a6d516dc245dddbea03c5d31a60')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7e4d453b22b5ae9eaea9e8b181b45be8')"
     ]
   }
 }

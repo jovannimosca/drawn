@@ -3,7 +3,7 @@ package com.example.drawn.ui.addreading
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.drawn.domain.model.Card
@@ -64,12 +63,22 @@ fun PositionSlot(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 120.dp)
+            .then(
+                if (isAssigned && assignedCard != null && onToggleReversed != null) {
+                    Modifier.combinedClickable(
+                        onClick = onTap,
+                        onDoubleClick = onToggleReversed
+                    )
+                } else {
+                    Modifier
+                }
+            )
     ) {
         Box(
             modifier = Modifier.padding(16.dp)
         ) {
             if (isAssigned && assignedCard != null) {
-                AssignedSlotContent(position, assignedCard, isReversed, onToggleReversed)
+                AssignedSlotContent(position, assignedCard, isReversed)
             } else {
                 UnassignedSlotContent(position)
             }
@@ -81,23 +90,16 @@ fun PositionSlot(
 private fun AssignedSlotContent(
     position: SpreadPosition,
     card: Card,
-    isReversed: Boolean,
-    onToggleReversed: (() -> Unit)?
+    isReversed: Boolean
 ) {
     Box(
-        horizontalAlignment = Alignment.CenterHorizontally,
+        contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = { onToggleReversed?.invoke() },
-                        onTap = { /* single tap handled by Card onClick */ }
-                    )
-                }
                 .padding(8.dp)
         ) {
             Text(

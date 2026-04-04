@@ -21,6 +21,7 @@ import com.example.drawn.data.database.entity.ReadingCardEntity
 import com.example.drawn.data.database.entity.ReadingEntity
 import com.example.drawn.data.database.entity.ReadingPhotoEntity
 import com.example.drawn.data.database.entity.SpreadEntity
+import com.example.drawn.data.database.migration.MIGRATION_1_2
 import java.util.concurrent.Executors
 
 @Database(
@@ -32,7 +33,7 @@ import java.util.concurrent.Executors
         ReadingCardEntity::class,
         ReadingPhotoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(DateTypeConverter::class, ArcanaTypeConverter::class)
@@ -57,6 +58,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .createFromAsset("database/drawn_prepopulated.db")
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                    .addMigrations(MIGRATION_1_2)
 
                 if (BuildConfig.DEBUG) {
                     builder.setQueryCallback(

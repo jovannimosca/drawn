@@ -140,6 +140,24 @@ class AddReadingViewModel @Inject constructor(
         }
     }
 
+    fun addPhoto(uri: String) {
+        viewModelScope.launch {
+            val currentState = (_uiState.value as? AddReadingUiState.Ready)?.state ?: return@launch
+            val updatedPhotos = currentState.photoUris + uri
+            val updatedState = currentState.copy(photoUris = updatedPhotos)
+            _uiState.value = AddReadingUiState.Ready(updatedState)
+        }
+    }
+
+    fun removePhoto(uri: String) {
+        viewModelScope.launch {
+            val currentState = (_uiState.value as? AddReadingUiState.Ready)?.state ?: return@launch
+            val updatedPhotos = currentState.photoUris - uri
+            val updatedState = currentState.copy(photoUris = updatedPhotos)
+            _uiState.value = AddReadingUiState.Ready(updatedState)
+        }
+    }
+
     fun saveReading() {
         viewModelScope.launch {
             val currentState = (_uiState.value as? AddReadingUiState.Ready)?.state ?: return@launch
@@ -170,6 +188,11 @@ class AddReadingViewModel @Inject constructor(
                 }
 
                 val readingId = readingRepository.createReading(reading, readingCards)
+                
+                currentState.photoUris.forEach { photoUri ->
+                    readingRepository.addPhotoToReading(readingId, photoUri)
+                }
+                
                 _uiState.value = AddReadingUiState.Saved(readingId)
             } catch (e: Exception) {
                 _uiState.value = AddReadingUiState.Error(e.message ?: "Failed to save reading")
