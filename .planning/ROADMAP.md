@@ -64,8 +64,14 @@ Plans:
   3. User can search past readings by notes, card names, or date
   4. User can toggle reversed/upright orientation for each card in a reading
   5. All screens display with a consistent dark mystical theme (dark purples, golds, starry aesthetics)
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Dark theme foundation: typography scale, complete M3 color scheme, card elevation
+- [ ] 03-02-PLAN.md — Search bar in ReadingListScreen with real-time filtering by title, notes, spread name
+- [ ] 03-03-PLAN.md — Inline edit and delete on ReadingDetailScreen with confirmation dialogs
+- [ ] 03-04-PLAN.md — Reversed card toggle on position slots with 180° rotation and gold "R" badge
+- [ ] 03-05-PLAN.md — Photo attachments: gallery/camera picker, grid display, full-screen viewer, delete
 
 ### Phase 4: Testing & CI
 **Goal**: Codebase meets 80% test coverage with automated CI quality gates on every PR
