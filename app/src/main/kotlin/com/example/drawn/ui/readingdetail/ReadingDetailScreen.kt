@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -420,12 +421,17 @@ private fun ReadingDetailContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        for (cardWithDetails in cards) {
-            ReadingDetailCardItem(
-                readingCardWithDetails = cardWithDetails,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 120.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(cards, key = { it.readingCard.positionOrder }) { cardWithDetails ->
+                ReadingDetailCardItem(
+                    readingCardWithDetails = cardWithDetails
+                )
+            }
         }
 
         // Notes section
@@ -538,28 +544,38 @@ private fun ReadingDetailCardItem(
     val readingCard = readingCardWithDetails.readingCard
     val card = readingCardWithDetails.card
 
-    Column(
-        modifier = modifier.fillMaxWidth()
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = DarkSurfaceVariant
+        ),
+        modifier = modifier
     ) {
-        Text(
-            text = readingCard.positionName,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        CardThumbnail(
-            card = card,
-            modifier = Modifier.graphicsLayer {
-                rotationZ = if (readingCard.isReversed) 180f else 0f
-            }
-        )
-        if (readingCard.interpretation != null) {
-            Spacer(modifier = Modifier.height(4.dp))
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
-                text = readingCard.interpretation,
-                style = MaterialTheme.typography.bodyMedium,
+                text = readingCard.positionName,
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            CardThumbnail(
+                card = card,
+                modifier = Modifier.graphicsLayer {
+                    rotationZ = if (readingCard.isReversed) 180f else 0f
+                }
+            )
+            if (readingCard.interpretation != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = readingCard.interpretation,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
