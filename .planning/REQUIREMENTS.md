@@ -33,10 +33,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Photo Attachments
 
-- [ ] **PHOTO-01**: User can attach photos from device gallery to a reading
-- [ ] **PHOTO-02**: User can capture photos with camera and attach to a reading
-- [ ] **PHOTO-03**: User can view attached photos in full-screen within reading details
-- [ ] **PHOTO-04**: User can remove attached photos from a reading
+- [x] **PHOTO-01**: User can attach photos from device gallery to a reading
+- [x] **PHOTO-02**: User can capture photos with camera and attach to a reading
+- [x] **PHOTO-03**: User can view attached photos in full-screen within reading details
+- [x] **PHOTO-04**: User can remove attached photos from a reading
 
 ### Theme & Visual
 
@@ -114,10 +114,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CARD-02 | Phase 2 | Complete |
 | CARD-03 | Phase 2 | Complete |
 | CARD-04 | Phase 3 | Complete |
-| PHOTO-01 | Phase 3 | Pending |
-| PHOTO-02 | Phase 3 | Pending |
-| PHOTO-03 | Phase 3 | Pending |
-| PHOTO-04 | Phase 3 | Pending |
+| PHOTO-01 | Phase 3 | Complete |
+| PHOTO-02 | Phase 3 | Complete |
+| PHOTO-03 | Phase 3 | Complete |
+| PHOTO-04 | Phase 3 | Complete |
 | THEME-01 | Phase 3 | Complete |
 | THEME-02 | Phase 3 | Complete |
 | TEST-01 | Phase 4 | Pending |

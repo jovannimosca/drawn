@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation & Dev Environment** - Set up local dev environment, project scaffolding, and core data layer
 - [ ] **Phase 2: Core Recording Loop** - Users can record complete readings with spreads, cards, and notes, and browse history
-- [ ] **Phase 3: Enrichment & Polish** - Photos, search, edit/delete, reversed cards, and dark mystical theme
+- [x] **Phase 3: Enrichment & Polish** - Photos, search, edit/delete, reversed cards, and dark mystical theme (completed 2026-04-04)
 - [ ] **Phase 4: Testing & CI** - 80% test coverage with automated CI quality gates
 
 ## Phase Details
@@ -71,7 +71,7 @@ Plans:
 - [x] 03-02-PLAN.md — Search bar in ReadingListScreen with real-time filtering by title, notes, spread name
 - [x] 03-03-PLAN.md — Inline edit and delete on ReadingDetailScreen with confirmation dialogs
 - [x] 03-04-PLAN.md — Reversed card toggle on position slots with 180° rotation and gold "R" badge
-- [ ] 03-05-PLAN.md — Photo attachments: gallery/camera picker, grid display, full-screen viewer, delete
+- [x] 03-05-PLAN.md — Photo attachments: gallery/camera picker, grid display, full-screen viewer, delete
 
 ### Phase 4: Testing & CI
 **Goal**: Codebase meets 80% test coverage with automated CI quality gates on every PR
@@ -93,5 +93,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Dev Environment | 0/0 | Not started | - |
 | 2. Core Recording Loop | 1/4 | In Progress|  |
-| 3. Enrichment & Polish | 4/5 | In Progress|  |
+| 3. Enrichment & Polish | 5/5 | Complete   | 2026-04-04 |
 | 4. Testing & CI | 0/0 | Not started | - |
