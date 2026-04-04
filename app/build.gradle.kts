@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -95,9 +96,11 @@ dependencies {
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
+    testImplementation(libs.hilt.android.testing)
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
     testImplementation(libs.room.testing)
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -145,4 +148,31 @@ detekt {
     buildUponDefaultConfig = true
     baseline = file("$rootDir/detekt-baseline.xml")
     autoCorrect = false
+}
+
+// Kover coverage configuration — 80% minimum threshold (D-69)
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("*_Factory", "*_HiltModules*", "*_Impl", "*_MembersInjector")
+                classes("*Hilt_*", "dagger.hilt.*")
+                classes("*.ComposableSingletons*")
+                classes("com.example.drawn.ui.*Screen*", "com.example.drawn.ui.*Step*")
+                classes("com.example.drawn.ui.*BottomSheet*", "com.example.drawn.ui.*Indicator*")
+                classes("com.example.drawn.ui.*Slot*", "com.example.drawn.ui.*Thumbnail*")
+                classes("com.example.drawn.ui.*Picker*")
+                classes("com.example.drawn.di.*")
+                classes("com.example.drawn.MainActivity")
+                classes("com.example.drawn.DrawnApplication")
+                classes("com.example.drawn.ui.navigation.*")
+                classes("com.example.drawn.ui.theme.*")
+            }
+        }
+        verify {
+            rule {
+                minBound(80)
+            }
+        }
+    }
 }
