@@ -45,6 +45,15 @@ android {
             isReturnDefaultValues = true
         }
     }
+    packaging {
+        resources {
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/LICENSE-notice.md"
+        }
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
@@ -111,11 +120,20 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.turbine)
+    androidTestImplementation(libs.room.testing)
 }
 
 // Enable JUnit 5 for unit tests
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
 
 ksp {
@@ -127,13 +145,15 @@ ksp {
 // Workaround: register KSP output dirs via android.sourceSets instead.
 android.sourceSets {
     getByName("main") {
-        java.srcDirs("build/generated/ksp/main/kotlin")
+        java.directories.add("build/generated/ksp/main/kotlin")
     }
     getByName("debug") {
-        java.srcDirs("build/generated/ksp/debug/kotlin", "build/generated/ksp/debug/java")
+        java.directories.add("build/generated/ksp/debug/kotlin")
+        java.directories.add("build/generated/ksp/debug/java")
     }
     getByName("release") {
-        java.srcDirs("build/generated/ksp/release/kotlin", "build/generated/ksp/release/java")
+        java.directories.add("build/generated/ksp/release/kotlin")
+        java.directories.add("build/generated/ksp/release/java")
     }
 }
 

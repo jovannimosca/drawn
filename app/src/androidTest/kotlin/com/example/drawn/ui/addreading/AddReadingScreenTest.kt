@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.drawn.domain.model.ArcanaType
 import com.example.drawn.domain.model.Card
 import com.example.drawn.domain.model.Spread
@@ -18,10 +19,12 @@ import com.example.drawn.ui.theme.DrawnTheme
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Before
 import org.junit.Rule
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class AddReadingScreenTest {
 
     @get:Rule
@@ -57,7 +60,7 @@ class AddReadingScreenTest {
         it.config.contains(SemanticsProperties.ProgressBarRangeInfo)
     }
 
-    @BeforeEach
+    @Before
     fun setUp() {
         viewModel = mockk(relaxed = true)
         uiStateFlow = MutableStateFlow(AddReadingUiState.Loading)

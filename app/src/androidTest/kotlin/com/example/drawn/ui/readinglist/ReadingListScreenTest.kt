@@ -11,17 +11,20 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.drawn.domain.model.Reading
 import com.example.drawn.ui.theme.DrawnTheme
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Before
 import org.junit.Rule
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.Test
+import org.junit.runner.RunWith
 import java.time.Instant
 
+@RunWith(AndroidJUnit4::class)
 class ReadingListScreenTest {
 
     @get:Rule
@@ -51,7 +54,7 @@ class ReadingListScreenTest {
         it.config.contains(SemanticsProperties.ProgressBarRangeInfo)
     }
 
-    @BeforeEach
+    @Before
     fun setUp() {
         viewModel = mockk(relaxed = true)
         uiStateFlow = MutableStateFlow(ReadingListUiState.Loading)

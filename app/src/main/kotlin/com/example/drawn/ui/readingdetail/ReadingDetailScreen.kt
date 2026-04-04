@@ -517,55 +517,55 @@ private fun ReadingDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             val photos = detail.photos
-            if (photos.isEmpty()) {
-                Text(
-                    text = if (isEditMode) "Tap + to add photos" else "No photos attached",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                LazyHorizontalGrid(
-                    rows = GridCells.Fixed(1),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp),
-                    modifier = Modifier.height(80.dp)
-                ) {
-                    if (isEditMode) {
-                        item {
-                            Card(
-                                onClick = onAddPhotoClick,
-                                colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                                modifier = Modifier.size(80.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "Add photo",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    items(photos, key = { it.id }) { photo ->
+            LazyHorizontalGrid(
+                rows = GridCells.Fixed(1),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 4.dp),
+                modifier = Modifier.height(80.dp)
+            ) {
+                if (isEditMode) {
+                    item {
                         Card(
-                            onClick = { onPhotoTap(photo) },
+                            onClick = onAddPhotoClick,
+                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
                             modifier = Modifier.size(80.dp)
                         ) {
-                            val imageModel = if (photo.photoUri.startsWith("/")) {
-                                java.io.File(photo.photoUri)
-                            } else {
-                                photo.photoUri
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Add photo",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                            AsyncImage(
-                                model = imageModel,
-                                contentDescription = "Reading photo",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
                         }
                     }
                 }
+                items(photos, key = { it.id }) { photo ->
+                    Card(
+                        onClick = { onPhotoTap(photo) },
+                        modifier = Modifier.size(80.dp)
+                    ) {
+                        val imageModel = if (photo.photoUri.startsWith("/")) {
+                            java.io.File(photo.photoUri)
+                        } else {
+                            photo.photoUri
+                        }
+                        AsyncImage(
+                            model = imageModel,
+                            contentDescription = "Reading photo",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+            if (photos.isEmpty() && !isEditMode) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "No photos attached",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 

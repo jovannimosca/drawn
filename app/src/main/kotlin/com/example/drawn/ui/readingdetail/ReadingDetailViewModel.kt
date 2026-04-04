@@ -27,7 +27,7 @@ sealed interface ReadingDetailUiState {
 @HiltViewModel
 class ReadingDetailViewModel @Inject constructor(
     private val readingRepository: ReadingRepository,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private var readingId: Long = -1L

@@ -41,8 +41,7 @@ import java.time.Instant
  *
  * Note: addPhoto test is disabled because it requires Android framework (Uri.parse,
  * ContentResolver.openInputStream) which needs Robolectric. Robolectric + JUnit5
- * integration is complex. Photo management will be covered by Compose UI tests
- * in a future plan.
+ * integration is complex. Photo management is covered by Compose UI tests in androidTest.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(io.mockk.junit5.MockKExtension::class)
@@ -288,7 +287,7 @@ class ReadingDetailViewModelTest {
         }
 
         @Test
-        @Disabled("Requires Android framework (Uri.parse, ContentResolver) — covered by Compose UI tests")
+        @Disabled("Requires Android framework (Uri.parse, ContentResolver) — covered by Compose UI tests in androidTest")
         fun `addPhoto calls repository addPhotoToReading`() = runTest {
             every { readingRepository.observeReadingWithDetails(any()) } returns flowOf(testDetail)
             coEvery { readingRepository.addPhotoToReading(any(), any()) } returns 2L
