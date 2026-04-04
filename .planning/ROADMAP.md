@@ -82,7 +82,12 @@ Plans:
   2. CI pipeline automatically runs unit tests on every pull request
   3. CI pipeline runs security and lint scans on every pull request
   4. CI pipeline blocks merge when coverage drops below 80%
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Kover coverage config + ViewModel unit tests (AddReading, ReadingList, ReadingDetail)
+- [ ] 04-02-PLAN.md — DAO tests (Room in-memory) + Repository tests (mocked DAOs)
+- [ ] 04-03-PLAN.md — Compose UI tests + CI workflow with coverage gates
 
 ## Progress
 
