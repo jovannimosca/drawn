@@ -78,4 +78,16 @@ class ReadingDetailViewModel @Inject constructor(
             readingRepository.deleteReading(readingId)
         }
     }
+
+    fun addPhoto(photoUri: String) {
+        viewModelScope.launch {
+            readingRepository.addPhotoToReading(readingId, photoUri)
+        }
+    }
+
+    fun deletePhoto(photoId: Long) {
+        viewModelScope.launch {
+            readingRepository.removePhotoFromReading(photoId)
+        }
+    }
 }

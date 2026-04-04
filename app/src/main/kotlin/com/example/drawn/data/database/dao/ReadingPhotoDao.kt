@@ -17,4 +17,7 @@ interface ReadingPhotoDao {
 
     @Delete
     suspend fun delete(photo: ReadingPhotoEntity)
+
+    @Query("SELECT * FROM reading_photos WHERE id = :photoId")
+    suspend fun getPhotoById(photoId: Long): ReadingPhotoEntity?
 }

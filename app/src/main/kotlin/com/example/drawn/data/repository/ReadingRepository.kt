@@ -10,6 +10,7 @@ import com.example.drawn.domain.model.Reading
 import com.example.drawn.domain.model.ReadingCard
 import com.example.drawn.domain.model.ReadingDetail
 import com.example.drawn.domain.model.ReadingPhoto
+import com.example.drawn.data.database.entity.ReadingPhotoEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -61,5 +62,18 @@ class ReadingRepository(
     suspend fun deleteReading(id: Long) {
         val reading = readingDao.getReadingById(id)
         reading?.let { readingDao.delete(it) }
+    }
+
+    suspend fun addPhotoToReading(readingId: Long, photoUri: String): Long {
+        val photoEntity = ReadingPhotoEntity(
+            readingId = readingId,
+            photoUri = photoUri
+        )
+        return readingPhotoDao.insert(photoEntity)
+    }
+
+    suspend fun removePhotoFromReading(photoId: Long) {
+        val photo = readingPhotoDao.getPhotoById(photoId)
+        photo?.let { readingPhotoDao.delete(it) }
     }
 }
