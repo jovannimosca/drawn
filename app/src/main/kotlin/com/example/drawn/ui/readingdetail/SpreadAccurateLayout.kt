@@ -2,28 +2,43 @@ package com.example.drawn.ui.readingdetail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.example.drawn.domain.model.ReadingCardWithDetails
+import kotlin.math.max
+
+/** Fixed position order for the Layout content block.
+ *  Each entry maps to a placement slot using the actual positionOrder values
+ *  from the Celtic Cross spread definition (0-9, not 1-10).
+ *  Null positions emit an empty Box so indices stay stable. */
+private val CELTIC_CROSS_POSITIONS = listOf(
+    4,  // idx 0: Possible Outcome (above/crown)
+    3,  // idx 1: Recent Past (left/challenge)
+    0,  // idx 2: Present (center)
+    5,  // idx 3: Near Future (right)
+    2,  // idx 4: Foundation (below)
+    9,  // idx 5: Outcome (staff top)
+    8,  // idx 6: Hopes and Fears
+    7,  // idx 7: Environment
+    6,  // idx 8: Self (staff bottom)
+    1,  // idx 9: Challenge (overlay on center — placed LAST for z-order)
+)
 
 @Composable
 fun SpreadAccurateLayout(
     spreadName: String,
     cards: List<ReadingCardWithDetails>,
     cardContent: @Composable (ReadingCardWithDetails) -> Unit,
+    emptyCard: @Composable () -> Unit = { Box(modifier = Modifier.size(1.dp)) },
     modifier: Modifier = Modifier
 ) {
     val sortedCards = cards.sortedBy { it.readingCard.positionOrder }
@@ -36,6 +51,7 @@ fun SpreadAccurateLayout(
             CrossAndStaffLayout(
                 cardByPosition = { cardByPosition(it) },
                 cardContent = cardContent,
+                emptyCard = emptyCard,
                 modifier = modifier
             )
         }
@@ -63,11 +79,13 @@ private fun RowLayout(
     modifier: Modifier = Modifier
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         cards.forEach { card ->
-            cardContent(card)
+            Box(modifier = Modifier.weight(1f)) {
+                cardContent(card)
+            }
         }
     }
 }
@@ -76,81 +94,99 @@ private fun RowLayout(
 private fun CrossAndStaffLayout(
     cardByPosition: (Int) -> ReadingCardWithDetails?,
     cardContent: @Composable (ReadingCardWithDetails) -> Unit,
+    emptyCard: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        // Cross section (positions 1-6)
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Position 5: Above (Crown)
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                cardByPosition(5)?.let { cardContent(it) }
-            }
-
-            // Positions 4, 1+2, 6: Left, Center (with crossing), Right
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                cardByPosition(4)?.let { cardContent(it) }
-
-                // Center with crossing card overlay
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    cardByPosition(1)?.let { cardContent(it) }
-                    cardByPosition(2)?.let { crossingCard ->
-                        Box(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    rotationZ = 90f
-                                    translationY = -4.dp.toPx()
-                                }
-                                .align(Alignment.Center)
-                        ) {
-                            cardContent(crossingCard)
-                        }
-                    }
+    Layout(
+        content = {
+            // Emit exactly CELTIC_CROSS_POSITIONS.size composables so indices are stable.
+            CELTIC_CROSS_POSITIONS.forEach { pos ->
+                val card = cardByPosition(pos)
+                if (card != null) {
+                    cardContent(card)
+                } else {
+                    emptyCard()
                 }
-
-                cardByPosition(6)?.let { cardContent(it) }
             }
+        },
+        modifier = modifier.fillMaxWidth()
+    ) { measurables, constraints ->
+        val spacing = 8.dp.roundToPx()
+        val crossGap = 4.dp.roundToPx()
+        val staffGap = 4.dp.roundToPx()
 
-            // Position 3: Below (Foundation)
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                cardByPosition(3)?.let { cardContent(it) }
-            }
+        // Cross: 3 columns. Staff: 1 column. Total 4 columns.
+        val columnCount = 4
+        val totalSpacing = spacing + crossGap * 2
+        val cardWidth = (constraints.maxWidth - totalSpacing) / columnCount
+
+        // Uniform card height: image (2:3 ratio) + text reserve for position name + card name
+        val imageHeight = (cardWidth * 3) / 2
+        val textReserve = 36.dp.roundToPx()
+        val uniformCardHeight = imageHeight + textReserve
+
+        val placeables = measurables.map { measurable ->
+            measurable.measure(
+                Constraints(maxWidth = cardWidth, maxHeight = uniformCardHeight)
+            )
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        val crossWidth = cardWidth * 3 + crossGap * 2
+        val crossHeight = uniformCardHeight * 3 + crossGap * 2
+        val staffHeight = uniformCardHeight * 4 + staffGap * 3
+        val layoutHeight = max(crossHeight, staffHeight)
+        val layoutWidth = crossWidth + spacing + cardWidth
 
-        // Staff section (positions 7-10)
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = "Advice",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        layout(layoutWidth, layoutHeight) {
+            val staffX = crossWidth + spacing
+
+            // idx 0: Position 5 — Crown (top center)
+            placeables[0].placeRelative(
+                crossGap + cardWidth,
+                0
             )
-            cardByPosition(7)?.let { cardContent(it) }
-            cardByPosition(8)?.let { cardContent(it) }
-            cardByPosition(9)?.let { cardContent(it) }
-            cardByPosition(10)?.let { cardContent(it) }
+
+            // idx 1: Position 4 — Challenge (left)
+            placeables[1].placeRelative(
+                0,
+                uniformCardHeight + crossGap
+            )
+
+            // idx 2: Position 1 — Present (center)
+            placeables[2].placeRelative(
+                crossGap + cardWidth,
+                uniformCardHeight + crossGap
+            )
+
+            // idx 3: Position 6 — Future (right)
+            placeables[3].placeRelative(
+                (crossGap + cardWidth) * 2,
+                uniformCardHeight + crossGap
+            )
+
+            // idx 4: Position 3 — Foundation (bottom center)
+            placeables[4].placeRelative(
+                crossGap + cardWidth,
+                (uniformCardHeight + crossGap) * 2
+            )
+
+            // idx 5-8: Staff (top to bottom: 10, 9, 8, 7)
+            for (i in 0 until 4) {
+                placeables[5 + i].placeRelative(
+                    staffX,
+                    i * (uniformCardHeight + staffGap)
+                )
+            }
+
+            // idx 9: Position 2 — Crossing (overlay on center, placed last for z-order)
+            placeables[9].placeRelativeWithLayer(
+                crossGap + cardWidth,
+                uniformCardHeight + crossGap,
+                layerBlock = {
+                    rotationZ = 90f
+                    translationY = -4.dp.toPx()
+                }
+            )
         }
     }
 }
@@ -168,7 +204,9 @@ private fun FallbackGridLayout(
             modifier = Modifier.fillMaxWidth()
         ) {
             rowCards.forEach { card ->
-                cardContent(card)
+                Box(modifier = Modifier.weight(1f)) {
+                    cardContent(card)
+                }
             }
             repeat(columns - rowCards.size) {
                 Spacer(modifier = Modifier.weight(1f))
