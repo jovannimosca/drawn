@@ -31,6 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -57,6 +60,7 @@ fun ReadingListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val isSearching = searchQuery.isNotEmpty()
+    var listVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -135,6 +139,9 @@ fun ReadingListScreen(
 
                 is ReadingListUiState.Success -> {
                     val readings = (uiState as ReadingListUiState.Success).readings
+                    if (readings.isNotEmpty() && !listVisible) {
+                        listVisible = true
+                    }
                     if (readings.isEmpty()) {
                         if (isSearching) {
                             Box(
@@ -158,7 +165,7 @@ fun ReadingListScreen(
                         }
                     } else {
                         AnimatedVisibility(
-                            visible = true,
+                            visible = listVisible,
                             enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300))
                         ) {
                             ReadingList(
