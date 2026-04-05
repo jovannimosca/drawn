@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-testing-ci-03-PLAN.md
-last_updated: "2026-04-04T19:20:03.816Z"
-last_activity: 2026-04-04
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-04-05T04:01:37.109Z"
+last_activity: 2026-04-05
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 17
-  completed_plans: 17
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 18
+  completed_plans: 18
   percent: 71
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 Phase: 3
 Plan: 5 of 5 complete
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Last activity: 2026-04-05
 
 Progress: [███████░░░] 71% (10/14 plans complete)
 
@@ -62,6 +62,7 @@ Progress: [███████░░░] 71% (10/14 plans complete)
 | Phase 04-testing-ci P01 | 15min | 3 tasks | 6 files |
 | Phase 04-testing-ci P02 | 15min | 2 tasks | 11 files |
 | Phase 04-testing-ci P03 | 15min | 2 tasks | 5 files |
+| Phase 05-continuous-deployment P01 | 5min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 04-testing-ci]: Parent entities (DeckEntity, SpreadEntity, ReadingEntity) inserted via runBlocking in @BeforeEach to satisfy foreign key constraints in DAO tests
 - [Phase 04-testing-ci]: Composed UI tests use @get:Rule with createComposeRule() — requires JUnit4 @Rule annotation via junit dependency
 - [Phase 04-testing-ci]: Composed UI tests require Android ActivityScenario environment — cannot run as pure JVM unit tests with current setup
+- [Phase 05-continuous-deployment]: Used dummy.jks fallback for local builds without release signing secrets
+- [Phase 05-continuous-deployment]: Version bump not committed back to repo — CI-only increment via environment variables
+- [Phase 05-continuous-deployment]: Single-job release workflow — no multi-job split needed for release pipeline
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T19:20:03.815Z
-Stopped at: Completed 04-testing-ci-03-PLAN.md
+Last session: 2026-04-05T04:01:37.106Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None

@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Core Recording Loop** - Users can record complete readings with spreads, cards, and notes, and browse history
 - [x] **Phase 3: Enrichment & Polish** - Photos, search, edit/delete, reversed cards, and dark mystical theme (completed 2026-04-04)
 - [x] **Phase 4: Testing & CI** - 80% test coverage with automated CI quality gates (completed 2026-04-04)
-- [ ] **Phase 5: Continuous Deployment** - Automated release pipeline: build production APK and publish GitHub Release on merge to main
+- [x] **Phase 5: Continuous Deployment** - Automated release pipeline: build production APK and publish GitHub Release on merge to main (completed 2026-04-05)
 
 ## Phase Details
 
@@ -101,7 +101,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 05-01-PLAN.md — Release signing config in build.gradle.kts + GitHub Actions release workflow with version bump, signed APK build, and GitHub Release publish
+- [x] 05-01-PLAN.md — Release signing config in build.gradle.kts + GitHub Actions release workflow with version bump, signed APK build, and GitHub Release publish
 
 ## Progress
 
@@ -114,4 +114,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Core Recording Loop | 4/4 | Complete   | 2026-04-04 |
 | 3. Enrichment & Polish | 5/5 | Complete   | 2026-04-04 |
 | 4. Testing & CI | 3/3 | Complete   | 2026-04-04 |
-| 5. Continuous Deployment | 0/1 | Not started| - |
+| 5. Continuous Deployment | 1/1 | Complete   | 2026-04-05 |
