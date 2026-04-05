@@ -121,12 +121,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 **Goal:** Elevate visual polish with animations, transitions, shared components, spread-accurate layouts, and mystical aesthetic refinements
 **Requirements**: THEME-01, THEME-02 (refinement beyond Phase 3 foundation)
 **Depends on:** Phase 5
-**Plans:** 6 plans
+**Plans:** 6/6 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md — Shared UI components (EmptyState, ErrorBanner, GoldDivider) + migrate ReadingListScreen
-- [ ] 06-02-PLAN.md — Compact reading list cards with metadata (date, spread) + fade-in animation
-- [ ] 06-03-PLAN.md — NebulaBackground composable applied to main screens
-- [ ] 06-04-PLAN.md — HorizontalPager swipe navigation for AddReading wizard
-- [ ] 06-05-PLAN.md — Y-axis flip animation for reversed card toggles + gold dividers in detail screen
-- [ ] 06-06-PLAN.md — Spread-accurate card layout (Celtic Cross cross+staff, row layouts)
+- [x] 06-01-PLAN.md — Shared UI components (EmptyState, ErrorBanner, GoldDivider) + migrate ReadingListScreen
+- [x] 06-02-PLAN.md — Compact reading list cards with metadata (date, spread) + fade-in animation
+- [x] 06-03-PLAN.md — NebulaBackground composable applied to main screens
+- [x] 06-04-PLAN.md — HorizontalPager swipe navigation for AddReading wizard
+- [x] 06-05-PLAN.md — Y-axis flip animation for reversed card toggles + gold dividers in detail screen
+- [x] 06-06-PLAN.md — Spread-accurate card layout (Celtic Cross cross+staff, row layouts)
