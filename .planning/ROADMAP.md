@@ -15,7 +15,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Foundation & Dev Environment** - Set up local dev environment, project scaffolding, and core data layer
 - [ ] **Phase 2: Core Recording Loop** - Users can record complete readings with spreads, cards, and notes, and browse history
 - [x] **Phase 3: Enrichment & Polish** - Photos, search, edit/delete, reversed cards, and dark mystical theme (completed 2026-04-04)
-- [ ] **Phase 4: Testing & CI** - 80% test coverage with automated CI quality gates
+- [x] **Phase 4: Testing & CI** - 80% test coverage with automated CI quality gates (completed 2026-04-04)
+- [ ] **Phase 5: Continuous Deployment** - Automated release pipeline: build production APK and publish GitHub Release on merge to main
 
 ## Phase Details
 
@@ -89,14 +90,28 @@ Plans:
 - [x] 04-02-PLAN.md — DAO tests (Room in-memory) + Repository tests (mocked DAOs)
 - [x] 04-03-PLAN.md — Compose UI tests + CI workflow with coverage gates
 
+### Phase 5: Continuous Deployment
+**Goal**: Merging to main automatically builds a production APK and publishes a GitHub Release
+**Depends on**: Phase 4
+**Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03
+**Success Criteria** (what must be TRUE):
+  1. Merging to `main` triggers a release workflow that builds a signed production APK
+  2. Release workflow auto-generates a version tag (semver) and creates a GitHub Release with the APK as an artifact
+  3. Release notes are auto-generated from commit messages since the last release
+**Plans**: 1 plan
+
+Plans:
+- [ ] 05-01-PLAN.md — Release signing config in build.gradle.kts + GitHub Actions release workflow with version bump, signed APK build, and GitHub Release publish
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Dev Environment | 0/0 | Not started | - |
-| 2. Core Recording Loop | 1/4 | In Progress|  |
+| 1. Foundation & Dev Environment | 5/5 | Complete   | 2026-04-03 |
+| 2. Core Recording Loop | 4/4 | Complete   | 2026-04-04 |
 | 3. Enrichment & Polish | 5/5 | Complete   | 2026-04-04 |
-| 4. Testing & CI | 2/3 | In Progress|  |
+| 4. Testing & CI | 3/3 | Complete   | 2026-04-04 |
+| 5. Continuous Deployment | 0/1 | Not started| - |
