@@ -461,27 +461,18 @@ private fun ReadingDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Cards grid (3 columns, equal width)
+        // Cards layout (spread-accurate geometry)
         item {
-            val columns = 3
-            cards.chunked(columns).forEach { rowCards ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    rowCards.forEach { cardWithDetails ->
-                        ReadingDetailCardItem(
-                            readingCardWithDetails = cardWithDetails,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    // Fill remaining space if last row has fewer than 3 cards
-                    repeat(columns - rowCards.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+            SpreadAccurateLayout(
+                spreadName = detail.spreadName,
+                cards = cards,
+                cardContent = { cardWithDetails ->
+                    ReadingDetailCardItem(
+                        readingCardWithDetails = cardWithDetails,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            )
         }
 
         // Divider between Cards and Notes
