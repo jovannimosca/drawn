@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -25,11 +27,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +77,19 @@ fun AddReadingScreen(
 
             is AddReadingUiState.Ready -> {
                 val state = (uiState as AddReadingUiState.Ready).state
+                val steps = AddReadingStep.entries
+                val pagerState = rememberPagerState(
+                    initialPage = state.currentStep.ordinal,
+                    pageCount = { steps.size }
+                )
+                val coroutineScope = rememberCoroutineScope()
+
+                LaunchedEffect(state.currentStep) {
+                    if (pagerState.currentPage != state.currentStep.ordinal) {
+                        pagerState.animateScrollToPage(state.currentStep.ordinal)
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -80,59 +97,74 @@ fun AddReadingScreen(
                 ) {
                     WizardStepIndicator(currentStep = state.currentStep)
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Column(
+                    HorizontalPager(
+                        state = pagerState,
+                        userScrollEnabled = true,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .padding(horizontal = 24.dp)
-                    ) {
-                        when (state.currentStep) {
-                            AddReadingStep.SpreadPicker -> {
-                                SpreadPickerStep(
-                                    spreads = state.spreads,
-                                    selectedSpread = state.selectedSpread,
-                                    onSpreadSelected = { viewModel.selectSpread(it) }
-                                )
-                            }
-
-                            AddReadingStep.CardAssignment -> {
-                                state.selectedSpread?.let { spread ->
-                                    CardAssignmentStep(
-                                        spread = spread,
-                                        assignedCards = state.assignedCards,
-                                        onPositionCardSelected = { positionOrder, card ->
-                                            viewModel.assignCard(positionOrder, card)
-                                        },
-                                        reversedPositions = state.reversedPositions,
-                                        onToggleReversed = { viewModel.togglePositionReversed(it) }
+                    ) { page ->
+                        val step = steps[page]
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            when (step) {
+                                AddReadingStep.SpreadPicker -> {
+                                    SpreadPickerStep(
+                                        spreads = state.spreads,
+                                        selectedSpread = state.selectedSpread,
+                                        onSpreadSelected = { viewModel.selectSpread(it) }
                                     )
                                 }
-                            }
 
-                            AddReadingStep.NotesAndSave -> {
-                                NotesAndSaveStep(
-                                    title = state.title,
-                                    notes = state.notes,
-                                    photoUris = state.photoUris,
-                                    isSaving = false,
-                                    onTitleChange = { viewModel.updateTitle(it) },
-                                    onNotesChange = { viewModel.updateNotes(it) },
-                                    onAddPhoto = { viewModel.addPhoto(it) },
-                                    onRemovePhoto = { viewModel.removePhoto(it) },
-                                    onSave = { viewModel.saveReading() }
-                                )
+                                AddReadingStep.CardAssignment -> {
+                                    state.selectedSpread?.let { spread ->
+                                        CardAssignmentStep(
+                                            spread = spread,
+                                            assignedCards = state.assignedCards,
+                                            onPositionCardSelected = { positionOrder, card ->
+                                                viewModel.assignCard(positionOrder, card)
+                                            },
+                                            reversedPositions = state.reversedPositions,
+                                            onToggleReversed = { viewModel.togglePositionReversed(it) }
+                                        )
+                                    }
+                                }
+
+                                AddReadingStep.NotesAndSave -> {
+                                    NotesAndSaveStep(
+                                        title = state.title,
+                                        notes = state.notes,
+                                        photoUris = state.photoUris,
+                                        isSaving = false,
+                                        onTitleChange = { viewModel.updateTitle(it) },
+                                        onNotesChange = { viewModel.updateNotes(it) },
+                                        onAddPhoto = { viewModel.addPhoto(it) },
+                                        onRemovePhoto = { viewModel.removePhoto(it) },
+                                        onSave = { viewModel.saveReading() }
+                                    )
+                                }
                             }
                         }
                     }
 
-                    // Bottom navigation buttons
                     WizardBottomBar(
                         currentStep = state.currentStep,
                         canProceed = state.canProceedToNext(),
-                        onNext = { viewModel.goToNextStep() },
-                        onBack = { viewModel.goToPreviousStep() }
+                        onNext = {
+                            viewModel.goToNextStep()
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        },
+                        onBack = {
+                            viewModel.goToPreviousStep()
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                            }
+                        }
                     )
                 }
             }
