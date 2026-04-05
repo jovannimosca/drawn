@@ -122,7 +122,7 @@ private fun CrossAndStaffLayout(
 
         // Uniform card height: image (2:3 ratio) + text reserve for position name + card name
         val imageHeight = (cardWidth * 3) / 2
-        val textReserve = 36.dp.roundToPx()
+        val textReserve = 60.dp.roundToPx()
         val uniformCardHeight = imageHeight + textReserve
 
         val placeables = measurables.map { measurable ->

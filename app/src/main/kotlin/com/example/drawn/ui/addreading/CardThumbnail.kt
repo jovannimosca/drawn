@@ -2,6 +2,7 @@ package com.example.drawn.ui.addreading
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
@@ -39,13 +40,13 @@ fun CardThumbnail(
                 contentDescription = card.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(80.dp)
+                    .fillMaxWidth()
                     .aspectRatio(2f / 3f)
             )
         } else {
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
-                    .width(80.dp)
+                    .fillMaxWidth()
                     .aspectRatio(2f / 3f),
                 contentAlignment = Alignment.Center
             ) {
@@ -58,7 +59,7 @@ fun CardThumbnail(
         }
         Text(
             text = card.name,
-            style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
