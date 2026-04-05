@@ -39,6 +39,10 @@ fun AddReadingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.reset()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -152,7 +156,6 @@ fun AddReadingScreen(
 
             is AddReadingUiState.Saved -> {
                 SideEffect {
-                    viewModel.reset()
                     onNavigateBack()
                 }
             }
