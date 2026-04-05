@@ -1,5 +1,7 @@
 package com.example.drawn.ui.addreading
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -92,6 +95,12 @@ private fun AssignedSlotContent(
     card: Card,
     isReversed: Boolean
 ) {
+    val flipAngle by animateFloatAsState(
+        targetValue = if (isReversed) 180f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "cardFlip"
+    )
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxWidth()
@@ -110,7 +119,8 @@ private fun AssignedSlotContent(
             CardThumbnail(
                 card = card,
                 modifier = Modifier.graphicsLayer {
-                    rotationZ = if (isReversed) 180f else 0f
+                    rotationY = flipAngle
+                    cameraDistance = 12f
                 }
             )
         }

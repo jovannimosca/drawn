@@ -3,6 +3,8 @@ package com.example.drawn.ui.readingdetail
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +73,7 @@ import coil3.compose.AsyncImage
 import com.example.drawn.domain.model.ReadingCardWithDetails
 import com.example.drawn.domain.model.ReadingPhoto
 import com.example.drawn.ui.addreading.CardThumbnail
+import com.example.drawn.ui.components.GoldDivider
 import com.example.drawn.ui.components.NebulaBackground
 import com.example.drawn.ui.theme.DarkOnSecondary
 import com.example.drawn.ui.theme.DarkPrimary
@@ -481,6 +484,11 @@ private fun ReadingDetailContent(
             }
         }
 
+        // Divider between Cards and Notes
+        item {
+            GoldDivider(modifier = Modifier.padding(vertical = 8.dp))
+        }
+
         // Notes
         item {
             Spacer(modifier = Modifier.height(16.dp))
@@ -508,6 +516,11 @@ private fun ReadingDetailContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+
+        // Divider between Notes and Photos
+        item {
+            GoldDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
 
         // Photos
@@ -595,6 +608,11 @@ private fun ReadingDetailCardItem(
 ) {
     val readingCard = readingCardWithDetails.readingCard
     val card = readingCardWithDetails.card
+    val flipAngle by animateFloatAsState(
+        targetValue = if (readingCard.isReversed) 180f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "detailCardFlip"
+    )
 
     Card(
         colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -617,7 +635,8 @@ private fun ReadingDetailCardItem(
             CardThumbnail(
                 card = card,
                 modifier = Modifier.graphicsLayer {
-                    rotationZ = if (readingCard.isReversed) 180f else 0f
+                    rotationY = flipAngle
+                    cameraDistance = 12f
                 }
             )
             if (readingCard.interpretation != null) {
