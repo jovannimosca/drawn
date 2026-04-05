@@ -6,12 +6,21 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.example.drawn.data.database.entity.ReadingEntity
+import com.example.drawn.data.database.entity.ReadingWithSpread
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ReadingDao {
     @Query("SELECT * FROM readings ORDER BY createdAt DESC")
     fun observeAllReadings(): Flow<List<ReadingEntity>>
+
+    @Query("""
+        SELECT r.id, r.title, r.spreadId, s.name as spreadName, r.createdAt, r.notes 
+        FROM readings r 
+        INNER JOIN spreads s ON r.spreadId = s.id 
+        ORDER BY r.createdAt DESC
+    """)
+    fun observeAllReadingsWithSpread(): Flow<List<ReadingWithSpread>>
 
     @Query("SELECT * FROM readings WHERE id = :id")
     fun observeReadingById(id: Long): Flow<ReadingEntity?>

@@ -1,8 +1,11 @@
 package com.example.drawn.ui.readinglist
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import com.example.drawn.ui.components.EmptyState
-import com.example.drawn.ui.components.ErrorBanner
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -31,10 +34,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.drawn.domain.model.Reading
+import com.example.drawn.data.database.entity.ReadingWithSpread
+import com.example.drawn.ui.components.EmptyState
+import com.example.drawn.ui.components.ErrorBanner
+import com.example.drawn.ui.theme.DarkSecondary
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,10 +152,15 @@ fun ReadingListScreen(
                             )
                         }
                     } else {
-                        ReadingList(
-                            readings = readings,
-                            onReadingSelected = onReadingSelected
-                        )
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 300))
+                        ) {
+                            ReadingList(
+                                readings = readings,
+                                onReadingSelected = onReadingSelected
+                            )
+                        }
                     }
                 }
             }
@@ -155,7 +170,7 @@ fun ReadingListScreen(
 
 @Composable
 private fun ReadingList(
-    readings: List<Reading>,
+    readings: List<ReadingWithSpread>,
     onReadingSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -174,28 +189,54 @@ private fun ReadingList(
 
 @Composable
 private fun ReadingListItem(
-    reading: Reading,
+    reading: ReadingWithSpread,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.material3.Card(
+    Card(
         onClick = onClick,
-        modifier = modifier.padding(vertical = 4.dp)
+        modifier = modifier.padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = reading.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                val formattedDate = DateTimeFormatter
+                    .ofPattern("MMM d, yyyy")
+                    .withZone(ZoneId.systemDefault())
+                    .format(Instant.ofEpochMilli(reading.createdAt))
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = reading.title,
-                style = MaterialTheme.typography.titleMedium
+                text = reading.spreadName,
+                style = MaterialTheme.typography.labelMedium,
+                color = DarkSecondary
             )
             reading.notes?.let { notes ->
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = notes,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

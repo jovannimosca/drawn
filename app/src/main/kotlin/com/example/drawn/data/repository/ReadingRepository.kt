@@ -8,6 +8,7 @@ import com.example.drawn.data.database.dao.ReadingPhotoDao
 import com.example.drawn.data.database.dao.SpreadDao
 import com.example.drawn.data.database.entity.toDomain
 import com.example.drawn.data.database.entity.toEntity
+import com.example.drawn.data.database.entity.ReadingWithSpread
 import com.example.drawn.domain.model.Card
 import com.example.drawn.domain.model.Reading
 import com.example.drawn.domain.model.ReadingCard
@@ -32,6 +33,10 @@ class ReadingRepository(
     fun observeAllReadings(): Flow<List<Reading>> =
         readingDao.observeAllReadings()
             .map { entities -> entities.map { it.toDomain() } }
+            .distinctUntilChanged()
+
+    fun observeAllReadingsWithSpread(): Flow<List<ReadingWithSpread>> =
+        readingDao.observeAllReadingsWithSpread()
             .distinctUntilChanged()
 
     fun observeReadingWithDetails(id: Long): Flow<ReadingDetail?> =

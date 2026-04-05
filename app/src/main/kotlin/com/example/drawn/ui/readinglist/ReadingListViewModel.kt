@@ -3,7 +3,7 @@ package com.example.drawn.ui.readinglist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.drawn.data.repository.ReadingRepository
-import com.example.drawn.domain.model.Reading
+import com.example.drawn.data.database.entity.ReadingWithSpread
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +27,7 @@ class ReadingListViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<ReadingListUiState> = combine(
-        readingRepository.observeAllReadings(),
+        readingRepository.observeAllReadingsWithSpread(),
         searchQuery
     ) { readings, query ->
         if (query.isBlank()) {
@@ -36,7 +36,8 @@ class ReadingListViewModel @Inject constructor(
             val lowerQuery = query.lowercase()
             readings.filter { reading ->
                 reading.title.lowercase().contains(lowerQuery) ||
-                    (reading.notes?.lowercase()?.contains(lowerQuery) == true)
+                    (reading.notes?.lowercase()?.contains(lowerQuery) == true) ||
+                    reading.spreadName.lowercase().contains(lowerQuery)
             }
         }
     }
@@ -53,6 +54,6 @@ class ReadingListViewModel @Inject constructor(
 
 sealed interface ReadingListUiState {
     data object Loading : ReadingListUiState
-    data class Success(val readings: List<Reading>) : ReadingListUiState
+    data class Success(val readings: List<ReadingWithSpread>) : ReadingListUiState
     data class Error(val message: String) : ReadingListUiState
 }

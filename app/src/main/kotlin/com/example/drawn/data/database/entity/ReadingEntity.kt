@@ -43,3 +43,12 @@ fun Reading.toEntity(): ReadingEntity = ReadingEntity(
     createdAt = createdAt.toEpochMilli(),
     notes = notes
 )
+
+data class ReadingWithSpread(
+    val id: Long,
+    val title: String,
+    val spreadId: Long,
+    val spreadName: String,
+    val createdAt: Long,
+    val notes: String? = null
+)
