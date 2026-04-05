@@ -71,6 +71,7 @@ import coil3.compose.AsyncImage
 import com.example.drawn.domain.model.ReadingCardWithDetails
 import com.example.drawn.domain.model.ReadingPhoto
 import com.example.drawn.ui.addreading.CardThumbnail
+import com.example.drawn.ui.components.NebulaBackground
 import com.example.drawn.ui.theme.DarkOnSecondary
 import com.example.drawn.ui.theme.DarkPrimary
 import com.example.drawn.ui.theme.DarkSecondary
@@ -240,18 +241,21 @@ fun ReadingDetailScreen(
 
             is ReadingDetailUiState.Success -> {
                 val detail = (uiState as ReadingDetailUiState.Success).detail
-                ReadingDetailContent(
-                    detail = detail,
-                    isEditMode = isEditMode,
-                    editedTitle = editedTitle,
-                    editedNotes = editedNotes,
-                    onTitleChange = { editedTitle = it },
-                    onNotesChange = { editedNotes = it },
-                    onAddPhotoClick = { showAddPhotoSheet = true },
-                    onPhotoTap = { photo -> showPhotoViewer = photo },
-                    onPhotoLongPress = { photo -> showDeletePhotoDialog = photo },
-                    modifier = Modifier.padding(padding)
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    NebulaBackground(modifier = Modifier.fillMaxSize())
+                    ReadingDetailContent(
+                        detail = detail,
+                        isEditMode = isEditMode,
+                        editedTitle = editedTitle,
+                        editedNotes = editedNotes,
+                        onTitleChange = { editedTitle = it },
+                        onNotesChange = { editedNotes = it },
+                        onAddPhotoClick = { showAddPhotoSheet = true },
+                        onPhotoTap = { photo -> showPhotoViewer = photo },
+                        onPhotoLongPress = { photo -> showDeletePhotoDialog = photo },
+                        modifier = Modifier.padding(padding)
+                    )
+                }
             }
         }
 

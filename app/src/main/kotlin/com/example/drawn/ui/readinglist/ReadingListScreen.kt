@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.drawn.data.database.entity.ReadingWithSpread
 import com.example.drawn.ui.components.EmptyState
 import com.example.drawn.ui.components.ErrorBanner
+import com.example.drawn.ui.components.NebulaBackground
 import com.example.drawn.ui.theme.DarkSecondary
 import java.time.Instant
 import java.time.ZoneId
@@ -74,11 +75,15 @@ fun ReadingListScreen(
             }
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            NebulaBackground(modifier = Modifier.fillMaxSize())
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
@@ -164,6 +169,7 @@ fun ReadingListScreen(
                     }
                 }
             }
+        }
         }
     }
 }
