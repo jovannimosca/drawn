@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer glow -->
+    <path
+        android:fillColor="#FFD700"
+        android:fillAlpha="0.12"
+        android:pathData="M54,54m28,0a28,28 0,1 1,-56 0a28,28 0,1 1,56 0"/>
+    <!-- Eight-pointed mystical star -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M54,26 L56.8,47.2 L74,34 L60.8,51.2 L82,54 L60.8,56.8 L74,74 L56.8,60.8 L54,82 L51.2,60.8 L34,74 L47.2,56.8 L26,54 L47.2,51.2 L34,34 L51.2,47.2 Z"/>
+    <!-- Inner circle -->
+    <path
+        android:fillColor="#1A0A2E"
+        android:pathData="M54,54m10,0a10,10 0,1 1,-20 0a10,10 0,1 1,20 0"/>
+    <!-- Center dot -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M54,54m3.5,0a3.5,3.5 0,1 1,-7 0a3.5,3.5 0,1 1,7 0"/>
+</vector>

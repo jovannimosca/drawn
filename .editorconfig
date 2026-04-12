@@ -1,0 +1,27 @@
+root = true
+
+[*]
+charset = utf-8
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+[*.kt]
+# Ktlint rules
+ktlint_standard_filename = disabled
+ktlint_standard_import-ordering = enabled
+ktlint_standard_indent = enabled
+ktlint_standard_max-line-length = error
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+
+[*.{xml,kts,gradle}]
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
