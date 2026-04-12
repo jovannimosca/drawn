@@ -46,7 +46,7 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest --no-daemon
 
       - name: Verify Test Coverage
-        run: ./gradlew koverVerify --no-daemon
+        run: ./gradlew koverVerify koverHtmlReport --no-daemon
 
       - name: Upload Coverage Report
         if: always()
