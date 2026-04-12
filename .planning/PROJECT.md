@@ -1,8 +1,8 @@
 # Drawn
 
-## What This Is
+## Current State (v1.0 shipped 2026-04-12)
 
-Drawn is a local-only Android app for tracking and organizing tarot card readings. Users can record readings by selecting a spread, assigning cards to positions, adding notes, and attaching photos of their physical layout. It ships with the standard 78-card Rider-Waite-Smith deck and common spreads, while supporting custom card decks (oracle, alternative imagery). Built with Kotlin and Jetpack Compose, designed for personal use first but structured as open source so the tarot community can benefit.
+Android app with Kotlin + Jetpack Compose, Room database, 78-card RWS deck, 3 built-in spreads, 80% test coverage, GitHub Actions CI/CD with automated releases.
 
 ## Core Value
 
@@ -12,26 +12,34 @@ Users can record a complete tarot reading — spread, cards, notes, and photos �
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Record new readings by selecting a spread and assigning cards to positions — v1.0 (Phase 2)
+- ✓ Add text notes to readings — v1.0 (Phase 2)
+- ✓ Browse and search past reading history — v1.0 (Phase 2, 3)
+- ✓ View reading details including spread layout, assigned cards, notes, and photos — v1.0 (Phase 2, 3)
+- ✓ Edit existing readings — v1.0 (Phase 3)
+- ✓ Delete readings — v1.0 (Phase 3)
+- ✓ Select from 3 built-in spreads (Celtic Cross, Three Card, Past/Present/Future) — v1.0 (Phase 2)
+- ✓ Browse and select cards from 78-card Rider-Waite-Smith deck — v1.0 (Phase 2)
+- ✓ Card images bundled in app (offline) — v1.0 (Phase 2)
+- ✓ Toggle reversed/upright orientation for cards — v1.0 (Phase 3)
+- ✓ Attach photos to readings (camera or gallery) — v1.0 (Phase 3)
+- ✓ Dark mystical theme — v1.0 (Phase 3, 6)
+- ✓ All code unit tested with 80% coverage — v1.0 (Phase 4)
+- ✓ CI/CD pipeline with automated tests and security scans — v1.0 (Phase 1, 4)
+- ✓ GitHub Actions release workflow with APK builds — v1.0 (Phase 5)
 
 ### Active
 
-- [ ] Record new readings by selecting a spread and assigning cards to positions
-- [ ] Browse and search past reading history
-- [ ] View reading details including spread layout, assigned cards, notes, and photos
-- [ ] Select from 3-5 pre-built common spreads (Celtic Cross, Three Card, Past/Present/Future, etc.)
-- [ ] Browse and select cards from the standard 78-card Rider-Waite-Smith deck (22 Major Arcana, 56 Minor Arcana)
-- [ ] Add custom card decks with full editor (name, description, image, keywords, categories, meanings)
-- [ ] Attach photos to readings (camera or gallery)
-- [ ] Add text notes to readings
-- [ ] All code unit tested with 80% coverage
-- [ ] Local dev environment set up for preview and development
-- [ ] CI/CD pipeline with automated unit tests and security scans on PRs (GitHub Actions)
-- [ ] Mystical/dark visual theme
+- [ ] Custom card decks with full editor (name, description, image, keywords, categories, meanings)
+- [ ] Pin/favorite readings for quick access
+- [ ] Tag readings with custom labels
+- [ ] View reading statistics (card frequency, suit distribution)
+- [ ] Expanded spread library beyond 3 built-in spreads
+- [ ] Export readings as PDF or image
 
 ### Out of Scope
 
-- F-Droid publication/automated deployment — deferred until deployment strategy is figured out
+- F-Droid publication — deferred
 - Random/shuffle card draw — v1 is freeform entry only
 - OAuth or cloud sync — local-only by design
 - iOS or cross-platform — Android-first with Kotlin
@@ -39,29 +47,31 @@ Users can record a complete tarot reading — spread, cards, notes, and photos �
 
 ## Context
 
-- **Platform:** Android (min SDK TBD), Kotlin + Jetpack Compose
+- **Platform:** Android (min SDK 26), Kotlin 2.2 + Jetpack Compose
 - **Storage:** Room Database (SQLite), local-only
 - **Card imagery:** 78 RWS card images bundled in app
-- **Design direction:** Mystical/dark theme — dark purples, golds, starry aesthetics
-- **Distribution:** F-Droid targeted eventually, but v1 focuses on CI/CD quality gates only
-- **Testing:** Unit tests required, 80% coverage minimum
+- **Design:** Dark mystical theme — dark purples, golds, starry aesthetics
+- **Testing:** 80% coverage minimum, Kover enforcement in CI
+- **Distribution:** GitHub Releases with signed APKs
+- **LOC:** ~2500 Kotlin (from Phase 1-7 development)
 
 ## Constraints
 
 - **Tech stack**: Kotlin + Jetpack Compose — best fit for native Android and F-Droid compatibility
 - **Storage**: Room Database — standard Android local storage, no cloud dependencies
 - **Testing**: 80% code coverage minimum — enforced in CI/CD pipeline
-- **Distribution**: F-Droid requirements (reproducible builds, no proprietary dependencies) must be considered even if deployment is deferred
+- **Distribution**: F-Droid requirements must be considered if pursuing in future
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Freeform entry over guided draw | Users record readings after physical sessions, not during | Freeform form-style entry |
-| Tap from grid/list for card selection | Simpler than shuffle/draw for retrospective entry | Visual card picker |
-| Card images bundled in app | No network dependency, works offline | Increases app size but ensures reliability |
-| F-Droid CI/CD deferred to future phase | Focus v1 on quality gates (tests, scans) rather than deployment | GitHub Actions for tests + security scans only |
-| 3-5 common spreads for v1 | Start focused, expand later | Celtic Cross, Three Card, Past/Present/Future at minimum |
+| Freeform entry over guided draw | Users record readings after physical sessions | ✓ Implemented |
+| Tap from grid/list for card selection | Simpler than shuffle/draw for retrospective entry | ✓ Implemented |
+| Card images bundled in app | No network dependency, works offline | ✓ Implemented |
+| 3 built-in spreads for v1 | Start focused, expand later | ✓ Implemented |
+| GitHub Actions releases | Simple, free, works for personal repo | ✓ Implemented |
+| Phase 7 gap closure | Audit found animation gaps, closed in Phase 7 | ✓ Fixed |
 
 ## Evolution
 
@@ -81,4 +91,5 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after initialization*
+
+*Last updated: 2026-04-12 after v1.0 milestone*
