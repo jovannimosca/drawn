@@ -137,5 +137,5 @@ Plans:
 **Gap Closure:** Closes gaps from v1.0-MILESTONE-AUDIT.md
 
 Plans:
-- [ ] 07-01-PLAN.md — Fix AnimatedVisibility fade-in to trigger on state transition
-- [ ] 07-02-PLAN.md — Implement shared element transitions for list→detail navigation
+- [x] 07-01-PLAN.md — Fix AnimatedVisibility fade-in to trigger on state transition
+- [x] 07-02-PLAN.md — Implement shared element transitions for list→detail navigation
