@@ -1,7 +1,7 @@
 package com.example.drawn.ui.readinglist
 
 import com.example.drawn.data.repository.ReadingRepository
-import com.example.drawn.domain.model.Reading
+import com.example.drawn.data.database.entity.ReadingWithSpread
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -32,19 +32,21 @@ class ReadingListViewModelTest {
     private val readingRepository: ReadingRepository = mockk()
     private lateinit var viewModel: ReadingListViewModel
 
-    private val testReading1 = Reading(
+    private val testReading1 = ReadingWithSpread(
         id = 1L,
         title = "Morning Reading",
         spreadId = 1L,
-        createdAt = Instant.parse("2026-01-01T08:00:00Z"),
+        spreadName = "Three Card",
+        createdAt = Instant.parse("2026-01-01T08:00:00Z").toEpochMilli(),
         notes = "Feeling optimistic"
     )
 
-    private val testReading2 = Reading(
+    private val testReading2 = ReadingWithSpread(
         id = 2L,
         title = "Evening Reflection",
         spreadId = 2L,
-        createdAt = Instant.parse("2026-01-01T20:00:00Z"),
+        spreadName = "Past Present Future",
+        createdAt = Instant.parse("2026-01-01T20:00:00Z").toEpochMilli(),
         notes = "Need to focus on career"
     )
 
@@ -85,7 +87,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `initial state is Loading`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(emptyList())
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(emptyList())
 
             createViewModel()
 
@@ -95,7 +97,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `emits Success when repository emits readings`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(listOf(testReading1, testReading2))
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(listOf(testReading1, testReading2))
 
             createViewModel()
             val state = collectUiState()
@@ -107,7 +109,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `emits Error when repository flow throws`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flow<List<Reading>> {
+            every { readingRepository.observeAllReadingsWithSpread() } returns flow<List<ReadingWithSpread>> {
                 throw RuntimeException("Database error")
             }
 
@@ -124,7 +126,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `blank query returns all readings`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(listOf(testReading1, testReading2))
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(listOf(testReading1, testReading2))
 
             createViewModel()
             val state = collectUiState()
@@ -136,7 +138,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `non-blank query filters by title case-insensitive`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(listOf(testReading1, testReading2))
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(listOf(testReading1, testReading2))
 
             createViewModel()
             // First collect to trigger the flow
@@ -153,7 +155,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `non-blank query filters by notes case-insensitive`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(listOf(testReading1, testReading2))
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(listOf(testReading1, testReading2))
 
             createViewModel()
             collectUiState()
@@ -169,7 +171,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `query with no matches returns empty list`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(listOf(testReading1, testReading2))
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(listOf(testReading1, testReading2))
 
             createViewModel()
             collectUiState()
@@ -188,7 +190,7 @@ class ReadingListViewModelTest {
 
         @Test
         fun `onSearchQueryChange updates searchQuery StateFlow`() = runTest {
-            every { readingRepository.observeAllReadings() } returns flowOf(emptyList())
+            every { readingRepository.observeAllReadingsWithSpread() } returns flowOf(emptyList())
 
             createViewModel()
 

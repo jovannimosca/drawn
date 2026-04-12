@@ -29,19 +29,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import android.net.Uri
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.time.Instant
 
 /**
  * ReadingDetailViewModel unit tests.
- *
- * Note: addPhoto test is disabled because it requires Android framework (Uri.parse,
- * ContentResolver.openInputStream) which needs Robolectric. Robolectric + JUnit5
- * integration is complex. Photo management is covered by Compose UI tests in androidTest.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(io.mockk.junit5.MockKExtension::class)
@@ -287,8 +285,15 @@ class ReadingDetailViewModelTest {
         }
 
         @Test
-        @Disabled("Requires Android framework (Uri.parse, ContentResolver) — covered by Compose UI tests in androidTest")
         fun `addPhoto calls repository addPhotoToReading`() = runTest {
+            val mockContentResolver = mockk<android.content.ContentResolver> {
+                every { openInputStream(any()) } returns ByteArrayInputStream(ByteArray(0))
+            }
+            mockContext.apply {
+                every { contentResolver } returns mockContentResolver
+                every { filesDir } returns java.io.File("/tmp")
+            }
+
             every { readingRepository.observeReadingWithDetails(any()) } returns flowOf(testDetail)
             coEvery { readingRepository.addPhotoToReading(any(), any()) } returns 2L
 

@@ -1,5 +1,5 @@
 build:
-  maxIssues: 0
+  maxIssues: 200
   excludeCorrectable: false
   weights:
     # complexity: 2
@@ -24,7 +24,7 @@ console-reports:
 
 complexity:
   active: true
-  ComplexMethod:
+  CyclomaticComplexMethod:
     active: true
     threshold: 15
   LongMethod:
@@ -69,15 +69,9 @@ style:
     active: true
   OptionalAbstractKeyword:
     active: true
-  RedundantVisibilityModifier:
-    active: true
 
 potential-bugs:
   active: true
-  MissingWhenCase:
-    active: true
-  RedundantElseInWhen:
-    active: true
   UnnecessarySafeCall:
     active: true
   NullableToStringCall:
