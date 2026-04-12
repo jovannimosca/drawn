@@ -30,9 +30,13 @@ android {
             val keystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
             val keyAlias = System.getenv("RELEASE_KEY_ALIAS")
             val keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-            
-            if (!keystorePath.isNullOrEmpty() && !keystorePassword.isNullOrEmpty() &&
-                !keyAlias.isNullOrEmpty() && !keyPassword.isNullOrEmpty()) {
+
+            if (
+                !keystorePath.isNullOrEmpty() &&
+                !keystorePassword.isNullOrEmpty() &&
+                !keyAlias.isNullOrEmpty() &&
+                !keyPassword.isNullOrEmpty()
+            ) {
                 storeFile = file(keystorePath)
                 storePassword = keystorePassword
                 this.keyAlias = keyAlias
@@ -49,10 +53,11 @@ android {
             signingConfig = if (releaseSigning?.storeFile?.exists() == true) releaseSigning else signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -74,7 +79,6 @@ android {
             useLegacyPackaging = false
         }
     }
-
 }
 
 dependencies {
