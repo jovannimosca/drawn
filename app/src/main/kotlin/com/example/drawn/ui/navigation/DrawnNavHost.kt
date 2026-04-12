@@ -1,5 +1,12 @@
 package com.example.drawn.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -52,6 +59,29 @@ fun DrawnNavHost(
 
                 else -> error("Unknown route: $key")
             }
+        },
+        transitionSpec = {
+            // Fade in with scale up for forward navigation (list -> detail)
+            fadeIn(animationSpec = tween(300)) + scaleIn(
+                initialScale = 0.95f,
+                animationSpec = tween(300)
+            ) togetherWith
+                // Fade out with scale down for exit
+                fadeOut(animationSpec = tween(300)) + scaleOut(
+                    targetScale = 0.95f,
+                    animationSpec = tween(300)
+                )
+        },
+        popTransitionSpec = {
+            // Reverse animation for back navigation (detail -> list)
+            fadeIn(animationSpec = tween(300)) + scaleIn(
+                initialScale = 0.95f,
+                animationSpec = tween(300)
+            ) togetherWith
+                fadeOut(animationSpec = tween(300)) + scaleOut(
+                    targetScale = 0.95f,
+                    animationSpec = tween(300)
+                )
         }
     )
 }
