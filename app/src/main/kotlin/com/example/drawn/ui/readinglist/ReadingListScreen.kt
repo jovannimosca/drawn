@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -139,9 +140,16 @@ fun ReadingListScreen(
 
                 is ReadingListUiState.Success -> {
                     val readings = (uiState as ReadingListUiState.Success).readings
-                    if (readings.isNotEmpty() && !listVisible) {
-                        listVisible = true
+
+                    // Reset visibility when loading new data, then show with animation when data arrives
+                    LaunchedEffect(readings) {
+                        if (readings.isNotEmpty()) {
+                            listVisible = true
+                        } else if (listVisible) {
+                            listVisible = false
+                        }
                     }
+
                     if (readings.isEmpty()) {
                         if (isSearching) {
                             Box(
