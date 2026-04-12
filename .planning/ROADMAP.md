@@ -130,3 +130,12 @@ Plans:
 - [x] 06-04-PLAN.md — HorizontalPager swipe navigation for AddReading wizard
 - [x] 06-05-PLAN.md — Y-axis flip animation for reversed card toggles + gold dividers in detail screen
 - [x] 06-06-PLAN.md — Spread-accurate card layout (Celtic Cross cross+staff, row layouts)
+
+### Phase 7: Polish Bug Fixes
+**Goal:** Fix remaining implementation gaps from Phase 6 audit
+**Depends on:** Phase 6
+**Gap Closure:** Closes gaps from v1.0-MILESTONE-AUDIT.md
+
+Plans:
+- [ ] 07-01-PLAN.md — Fix AnimatedVisibility fade-in to trigger on state transition
+- [ ] 07-02-PLAN.md — Implement shared element transitions for list→detail navigation
