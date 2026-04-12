@@ -461,6 +461,11 @@ private fun ReadingDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
+        // Divider above cards
+        item {
+            GoldDivider(modifier = Modifier.padding(vertical = 8.dp))
+        }
+
         // Cards layout (spread-accurate geometry)
         item {
             SpreadAccurateLayout(
@@ -468,14 +473,13 @@ private fun ReadingDetailContent(
                 cards = cards,
                 cardContent = { cardWithDetails ->
                     ReadingDetailCardItem(
-                        readingCardWithDetails = cardWithDetails,
-                        modifier = Modifier.fillMaxWidth()
+                        readingCardWithDetails = cardWithDetails
                     )
                 }
             )
         }
 
-        // Divider between Cards and Notes
+        // Divider below cards
         item {
             GoldDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
@@ -500,6 +504,12 @@ private fun ReadingDetailContent(
                     label = { Text("Notes") },
                     minLines = 3
                 )
+            } else if (!reading.notes.isNullOrBlank()) {
+                Text(
+                    text = reading.notes,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             } else {
                 Text(
                     text = "No notes",
@@ -516,7 +526,7 @@ private fun ReadingDetailContent(
 
         // Photos
         item {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Photos",
                 style = MaterialTheme.typography.titleMedium,
@@ -525,55 +535,55 @@ private fun ReadingDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             val photos = detail.photos
-            LazyHorizontalGrid(
-                rows = GridCells.Fixed(1),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(vertical = 4.dp),
-                modifier = Modifier.height(80.dp)
-            ) {
-                if (isEditMode) {
-                    item {
-                        Card(
-                            onClick = onAddPhotoClick,
-                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                            modifier = Modifier.size(80.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "Add photo",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-                items(photos, key = { it.id }) { photo ->
-                    Card(
-                        onClick = { onPhotoTap(photo) },
-                        modifier = Modifier.size(80.dp)
-                    ) {
-                        val imageModel = if (photo.photoUri.startsWith("/")) {
-                            java.io.File(photo.photoUri)
-                        } else {
-                            photo.photoUri
-                        }
-                        AsyncImage(
-                            model = imageModel,
-                            contentDescription = "Reading photo",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-            }
             if (photos.isEmpty() && !isEditMode) {
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "No photos attached",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            } else {
+                LazyHorizontalGrid(
+                    rows = GridCells.Fixed(1),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                    modifier = Modifier.height(80.dp)
+                ) {
+                    if (isEditMode) {
+                        item {
+                            Card(
+                                onClick = onAddPhotoClick,
+                                colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
+                                modifier = Modifier.size(80.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = "Add photo",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    items(photos, key = { it.id }) { photo ->
+                        Card(
+                            onClick = { onPhotoTap(photo) },
+                            modifier = Modifier.size(80.dp)
+                        ) {
+                            val imageModel = if (photo.photoUri.startsWith("/")) {
+                                java.io.File(photo.photoUri)
+                            } else {
+                                photo.photoUri
+                            }
+                            AsyncImage(
+                                model = imageModel,
+                                contentDescription = "Reading photo",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -599,34 +609,40 @@ private fun ReadingDetailCardItem(
 ) {
     val readingCard = readingCardWithDetails.readingCard
     val card = readingCardWithDetails.card
+    var isAnimated by remember { mutableStateOf(false) }
+    val targetAngle = if (readingCard.isReversed) 180f else 0f
     val flipAngle by animateFloatAsState(
-        targetValue = if (readingCard.isReversed) 180f else 0f,
+        targetValue = if (isAnimated) targetAngle else 0f,
         animationSpec = tween(durationMillis = 400),
         label = "detailCardFlip"
     )
+    LaunchedEffect(readingCard.id) {
+        isAnimated = true
+    }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = DarkSurface),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = DarkSurfaceVariant
+            color = DarkPrimary
         ),
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = readingCard.positionName,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             CardThumbnail(
                 card = card,
-                modifier = Modifier.graphicsLayer {
-                    rotationY = flipAngle
+                imageModifier = Modifier.graphicsLayer {
+                    rotationZ = flipAngle
                     cameraDistance = 12f
                 }
             )

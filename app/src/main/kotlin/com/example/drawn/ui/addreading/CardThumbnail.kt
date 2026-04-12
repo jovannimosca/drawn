@@ -26,7 +26,8 @@ import com.example.drawn.domain.model.Card
 @Composable
 fun CardThumbnail(
     card: Card,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    imageModifier: Modifier = Modifier
 ) {
     val drawableResId = cardDrawableRes(card)
 
@@ -39,7 +40,7 @@ fun CardThumbnail(
                 painter = painterResource(id = drawableResId),
                 contentDescription = card.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
+                modifier = imageModifier
                     .fillMaxWidth()
                     .aspectRatio(2f / 3f)
             )

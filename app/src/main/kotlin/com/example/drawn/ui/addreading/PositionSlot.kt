@@ -22,7 +22,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -66,22 +70,12 @@ fun PositionSlot(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 120.dp)
-            .then(
-                if (isAssigned && assignedCard != null && onToggleReversed != null) {
-                    Modifier.combinedClickable(
-                        onClick = onTap,
-                        onDoubleClick = onToggleReversed
-                    )
-                } else {
-                    Modifier
-                }
-            )
     ) {
         Box(
             modifier = Modifier.padding(16.dp)
         ) {
             if (isAssigned && assignedCard != null) {
-                AssignedSlotContent(position, assignedCard, isReversed)
+                AssignedSlotContent(position, assignedCard, isReversed, onToggleReversed)
             } else {
                 UnassignedSlotContent(position)
             }
@@ -93,13 +87,19 @@ fun PositionSlot(
 private fun AssignedSlotContent(
     position: SpreadPosition,
     card: Card,
-    isReversed: Boolean
+    isReversed: Boolean,
+    onToggleReversed: (() -> Unit)? = null
 ) {
+    var isAnimated by remember { mutableStateOf(false) }
+    val targetAngle = if (isReversed) 180f else 0f
     val flipAngle by animateFloatAsState(
-        targetValue = if (isReversed) 180f else 0f,
+        targetValue = if (isAnimated) targetAngle else 0f,
         animationSpec = tween(durationMillis = 400),
         label = "cardFlip"
     )
+    LaunchedEffect(isReversed) {
+        isAnimated = true
+    }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -118,15 +118,36 @@ private fun AssignedSlotContent(
             )
             CardThumbnail(
                 card = card,
-                modifier = Modifier.graphicsLayer {
-                    rotationY = flipAngle
+                imageModifier = Modifier.graphicsLayer {
+                    rotationZ = flipAngle
                     cameraDistance = 12f
                 }
             )
         }
 
-        // Reversed badge
-        if (isReversed) {
+        // Reversed toggle button
+        if (onToggleReversed != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .combinedClickable(
+                        onClick = onToggleReversed,
+                        onDoubleClick = {}
+                    )
+                    .size(24.dp)
+                    .background(
+                        if (isReversed) DarkSecondary else DarkSurfaceVariant,
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "↻",
+                    color = if (isReversed) DarkOnSecondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp
+                )
+            }
+        } else if (isReversed) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -135,10 +156,9 @@ private fun AssignedSlotContent(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "R",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "↻",
                     color = DarkOnSecondary,
-                    fontSize = 8.sp
+                    fontSize = 10.sp
                 )
             }
         }
