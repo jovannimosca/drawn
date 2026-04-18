@@ -1,8 +1,44 @@
 name: Release
 
+# Conventional Commits Approach:
+# - Current: Client-side parsing in "Generate release notes" step using GitHub Script
+# - This approach is simple, requires no extra dependencies, and works well for the project's scale
+# - Alternative: semantic-release with @semantic-release/commit-analyzer (adds CI complexity)
+# - Validation: For PR validation, consider adding commitlint as a separate workflow (not in this file)
+#
+# CI Optimization:
+# - Path filters prevent unnecessary runs on docs-only changes (app/, *.gradle*, gradle/, .github/workflows/)
+# - workflow_dispatch provides manual override for special release scenarios
+# - skip_release input allows building without releasing
+
 on:
   push:
     branches: [main]
+    # Only trigger on relevant file changes (app code, gradle configs, workflow itself)
+    # Excludes: markdown, docs, non-code files to avoid unnecessary CI runs
+    paths:
+      - 'app/**'
+      - '*.gradle*'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/**'
+  # Manual trigger with override options
+  workflow_dispatch:
+    inputs:
+      skip_release:
+        description: 'Skip creating a release (build only)'
+        required: false
+        type: boolean
+        default: false
+      version_override:
+        description: 'Override version name (e.g., "1.2.3")'
+        required: false
+        type: string
+      version_code_override:
+        description: 'Override version code (integer)'
+        required: false
+        type: number
 
 concurrency:
   group: release-${{ github.ref }}
@@ -10,7 +46,8 @@ concurrency:
 
 jobs:
   release:
-    if: "!contains(github.event.head_commit.message, '[skip release]')"
+    # Skip if commit message contains [skip release] OR if skip_release input is true
+    if: "(!contains(github.event.head_commit.message, '[skip release]')) && (github.event.inputs.skip_release != 'true')"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -56,6 +93,28 @@ jobs:
       - name: Bump version
         id: version
         run: |
+          # Check for manual overrides from workflow_dispatch inputs
+          if [[ "${{ github.event.inputs.version_override }}" != "" ]]; then
+            VERSION_NAME="${{ github.event.inputs.version_override }}"
+            # Parse version code from override or auto-generate
+            if [[ "${{ github.event.inputs.version_code_override }}" != "" ]]; then
+              VERSION_CODE="${{ github.event.inputs.version_code_override }}"
+            else
+              # Generate version code based on semantic version
+              MAJOR=$(echo "$VERSION_NAME" | cut -d. -f1)
+              MINOR=$(echo "$VERSION_NAME" | cut -d. -f2)
+              PATCH=$(echo "$VERSION_NAME" | cut -d. -f3)
+              VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + ${PATCH:-0}))
+            fi
+            echo "Using manual version override: $VERSION_NAME (code: $VERSION_CODE)"
+            echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+            echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+            echo "RELEASE_TAG=v${VERSION_NAME}" >> $GITHUB_ENV
+            echo "Bumped version to $VERSION_NAME (code: $VERSION_CODE, tag: v${VERSION_NAME})"
+            exit 0
+          fi
+
+          # Auto-bump logic (original behavior)
           CURRENT_CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]\+')
           NEW_CODE=$((CURRENT_CODE + 1))
 
