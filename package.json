@@ -1,8 +1,13 @@
 {
   "name": "drawn",
+  "scripts": {
+    "prepare": "husky install"
+  },
   "devDependencies": {
+    "husky": "^9.1.0",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "semantic-release": "^24.0.0",
-    "gradle-semantic-release-plugin": "^1.10.0",
     "@semantic-release/commit-analyzer": "^13.0.0",
     "@semantic-release/release-notes-generator": "^14.0.0",
     "@semantic-release/github": "^11.0.0",
@@ -10,7 +15,9 @@
   },
   "release": {
     "plugins": [
-      "gradle-semantic-release-plugin",
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/github",
       ["@semantic-release/git", {"assets": ["gradle.properties"]}]
     ]
   }
