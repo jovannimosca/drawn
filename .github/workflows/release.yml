@@ -3,10 +3,10 @@ name: Release
 # Semantic Release Approach:
 # - Uses semantic-release for automatic versioning based on conventional commits
 # - Plugins: commit-analyzer, release-notes-generator, github
-# - Output variables: VERSION_NAME, RELEASE_TAG for subsequent steps
+# - Version synced to gradle.properties for Android build
 #
 # CI Optimization:
-# - Path filters prevent unnecessary runs on docs-only changes (app/, *.gradle*, gradle/)
+# - Path filters prevent unnecessary runs on docs-only changes
 
 on:
   push:
