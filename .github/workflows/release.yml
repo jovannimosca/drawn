@@ -115,6 +115,4 @@ jobs:
           owner: ${{ github.repository_owner }}
           repo: ${{ github.event.repository.name }}
           release_id: ${{ github.event.release.id }}
-          asset_path: app/build/outputs/apk/release/app-release.apk
-          asset_name: drawn-${{ env.VERSION_NAME }}.apk
-          asset_content_type: application/vnd.android.base.apk
+          files: app/build/outputs/apk/release/app-release.apk
