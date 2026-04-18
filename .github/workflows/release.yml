@@ -85,16 +85,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set version outputs
-        run: |
-          echo "VERSION_NAME=${{ steps.semantic-release.outputs.version }}" >> $GITHUB_ENV
-          echo "RELEASE_TAG=${{ steps.semantic-release.outputs.tag }}" >> $GITHUB_ENV
-
       - name: Read version from gradle.properties
         run: |
-          source "$GITHUB_ENV"
           echo "VERSION_NAME=$(grep '^version=' gradle.properties | cut -d= -f2)" >> $GITHUB_ENV
           echo "VERSION_CODE=$(grep '^versionCode=' gradle.properties | cut -d= -f2)" >> $GITHUB_ENV
+          echo "RELEASE_TAG=v$(grep '^version=' gradle.properties | cut -d= -f2)" >> $GITHUB_ENV
 
       - name: Build Release APK
         run: ./gradlew :app:assembleRelease --no-daemon
