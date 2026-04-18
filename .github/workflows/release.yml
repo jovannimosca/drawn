@@ -19,6 +19,11 @@ on:
       - "gradle/**"
       - "gradlew"
       - "gradlew.bat"
+  # Wait for CI to pass before running release
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
 
 concurrency:
   group: release-${{ github.ref }}
@@ -26,8 +31,8 @@ concurrency:
 
 jobs:
   release:
-    # Skip if commit message contains [skip release]
-    if: "!contains(github.event.head_commit.message, '[skip release]')"
+    # Only run if CI workflow succeeded AND commit doesn't contain [skip release]
+    if: "!contains(github.event.head_commit.message, '[skip release]') && github.event.workflow_run.conclusion == 'success'"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
