@@ -2,7 +2,7 @@ name: Release
 
 # Semantic Release Approach:
 # - Uses semantic-release for automatic versioning based on conventional commits
-# - Plugins: commit-analyzer, release-notes-generator, github
+# - Plugins: commit-analyzer, release-notes-generator, git, exec, github
 # - Version synced to gradle.properties for Android build
 #
 # CI Optimization:
@@ -24,12 +24,48 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [main]
+  # Dry-run on pull requests to validate semantic-release config
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "*.gradle*"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "package.json"
+      - ".commitlintrc.json"
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  # Dry-run validation on PRs - doesn't publish anything
+  validate-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Semantic Release Dry-Run
+        run: npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release:
     # Only run if CI workflow succeeded AND commit doesn't contain [skip release]
     if: "!contains(github.event.head_commit.message, '[skip release]') && github.event.workflow_run.conclusion == 'success'"
