@@ -149,6 +149,5 @@ jobs:
           body: ${{ steps.notes.outputs.result }}
           files: |
             app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/mapping/release/mapping.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
