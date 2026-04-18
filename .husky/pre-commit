@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./gradlew :app:testDebugUnitTest --no-daemon
+./gradlew koverVerify koverHtmlReport --no-daemon

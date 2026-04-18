@@ -1,18 +1,12 @@
 name: Release
 
-# Semantic Release Approach:
-# - Uses semantic-release for automatic versioning based on conventional commits
-# - Plugins: commit-analyzer, release-notes-generator, github
-# - Version synced to gradle.properties for Android build
-#
-# CI Optimization:
-# - Path filters prevent unnecessary runs on docs-only changes
+# Semantic Release for automatic versioning and release creation
+# Triggers only after CI passes on main branch
 
 on:
   push:
-    branches: [main]
-    # Only trigger on relevant file changes (app code, gradle configs, workflow itself)
-    # Excludes: markdown, docs, non-code files to avoid unnecessary CI runs
+    branches: [ main ]
+    # Only trigger on relevant file changes
     paths:
       - "app/**"
       - "*.gradle*"
@@ -21,9 +15,9 @@ on:
       - "gradlew.bat"
   # Wait for CI to pass before running release
   workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+    workflows: [ CI ]
+    types: [ completed ]
+    branches: [ main ]
 
 concurrency:
   group: release-${{ github.ref }}
@@ -31,12 +25,15 @@ concurrency:
 
 jobs:
   release:
+    name: Create Release
     # Only run if CI workflow succeeded AND commit doesn't contain [skip release]
-    if: "!contains(github.event.head_commit.message, '[skip release]') && github.event.workflow_run.conclusion == 'success'"
+    if: "!contains(github.event.head_commit.message, '[skip release]') &&
+      github.event.workflow_run.conclusion == 'success'"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
+      issues: write
 
     steps:
       - name: Checkout
@@ -67,7 +64,8 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*',
+            '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
@@ -86,22 +84,12 @@ jobs:
           extra_plugins: |
             @semantic-release/commit-analyzer
             @semantic-release/release-notes-generator
+            @semantic-release/git
+            @semantic-release/exec
             @semantic-release/github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull updated gradle.properties
-        run: git pull
-
-      - name: Read version from gradle.properties
-        run: |
-          echo "VERSION_NAME=$(grep '^version=' gradle.properties | cut -d= -f2)" >> $GITHUB_ENV
-          echo "VERSION_CODE=$(grep '^versionCode=' gradle.properties | cut -d= -f2)" >> $GITHUB_ENV
-          echo "RELEASE_TAG=v$(grep '^version=' gradle.properties | cut -d= -f2)" >> $GITHUB_ENV
-
-      - name: Build Release APK
-        run: ./gradlew :app:assembleRelease --no-daemon
-        env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_KEYSTORE_PATH: ${{ env.RELEASE_KEYSTORE_PATH }}

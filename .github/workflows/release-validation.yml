@@ -1,0 +1,57 @@
+name: Release Validation
+
+# Runs semantic-release in dry-run mode on PRs to validate configuration
+# Shows what version would be published without actually releasing
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "app/**"
+      - "*.gradle*"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "package.json"
+      - ".commitlintrc.json"
+      - ".github/workflows/release.yml"
+
+concurrency:
+  group: release-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-release:
+    name: Validate Release Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Semantic Release Dry-Run
+        uses: cycjimmy/semantic-release-action@v6
+        with:
+          dry_run: true
+          extra_plugins: |
+            @semantic-release/commit-analyzer
+            @semantic-release/release-notes-generator
+            @semantic-release/git
+            @semantic-release/exec
+            @semantic-release/github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
