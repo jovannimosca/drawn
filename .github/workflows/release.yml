@@ -1,13 +1,12 @@
 name: Release
 
-# Conventional Commits Approach:
-# - Current: Client-side parsing in "Generate release notes" step using GitHub Script
-# - This approach is simple, requires no extra dependencies, and works well for the project's scale
-# - Alternative: semantic-release with @semantic-release/commit-analyzer (adds CI complexity)
-# - Validation: For PR validation, consider adding commitlint as a separate workflow (not in this file)
+# Semantic Release Approach:
+# - Uses semantic-release for automatic versioning based on conventional commits
+# - Plugins: commit-analyzer, release-notes-generator, github
+# - Output variables: VERSION_NAME, RELEASE_TAG for subsequent steps
 #
 # CI Optimization:
-# - Path filters prevent unnecessary runs on docs-only changes (app/, *.gradle*, gradle/, .github/workflows/)
+# - Path filters prevent unnecessary runs on docs-only changes (app/, *.gradle*, gradle/)
 # - workflow_dispatch provides manual override for special release scenarios
 # - skip_release input allows building without releasing
 
@@ -17,28 +16,19 @@ on:
     # Only trigger on relevant file changes (app code, gradle configs, workflow itself)
     # Excludes: markdown, docs, non-code files to avoid unnecessary CI runs
     paths:
-      - 'app/**'
-      - '*.gradle*'
-      - 'gradle/**'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - '.github/workflows/**'
+      - "app/**"
+      - "*.gradle*"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
   # Manual trigger with override options
   workflow_dispatch:
     inputs:
       skip_release:
-        description: 'Skip creating a release (build only)'
+        description: "Skip creating a release (build only)"
         required: false
         type: boolean
         default: false
-      version_override:
-        description: 'Override version name (e.g., "1.2.3")'
-        required: false
-        type: string
-      version_code_override:
-        description: 'Override version code (integer)'
-        required: false
-        type: number
 
 concurrency:
   group: release-${{ github.ref }}
@@ -90,49 +80,22 @@ jobs:
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
 
-      - name: Bump version
-        id: version
+      - name: Run semantic-release
+        id: semantic-release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          branches: main
+          extra_plugins: |
+            @semantic-release/commit-analyzer
+            @semantic-release/release-notes-generator
+            @semantic-release/github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version outputs
         run: |
-          # Check for manual overrides from workflow_dispatch inputs
-          if [[ "${{ github.event.inputs.version_override }}" != "" ]]; then
-            VERSION_NAME="${{ github.event.inputs.version_override }}"
-            # Parse version code from override or auto-generate
-            if [[ "${{ github.event.inputs.version_code_override }}" != "" ]]; then
-              VERSION_CODE="${{ github.event.inputs.version_code_override }}"
-            else
-              # Generate version code based on semantic version
-              MAJOR=$(echo "$VERSION_NAME" | cut -d. -f1)
-              MINOR=$(echo "$VERSION_NAME" | cut -d. -f2)
-              PATCH=$(echo "$VERSION_NAME" | cut -d. -f3)
-              VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + ${PATCH:-0}))
-            fi
-            echo "Using manual version override: $VERSION_NAME (code: $VERSION_CODE)"
-            echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
-            echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-            echo "RELEASE_TAG=v${VERSION_NAME}" >> $GITHUB_ENV
-            echo "Bumped version to $VERSION_NAME (code: $VERSION_CODE, tag: v${VERSION_NAME})"
-            exit 0
-          fi
-
-          # Auto-bump logic (original behavior)
-          CURRENT_CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]\+')
-          NEW_CODE=$((CURRENT_CODE + 1))
-
-          CURRENT_NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"')
-          # Increment patch: 1.0 → 1.0.0, 1.0.0 → 1.0.1
-          if [[ "$CURRENT_NAME" =~ ^[0-9]+\.[0-9]+$ ]]; then
-            NEW_NAME="${CURRENT_NAME}.0"
-          elif [[ "$CURRENT_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            PATCH=$(echo "$CURRENT_NAME" | cut -d. -f3)
-            NEW_NAME=$(echo "$CURRENT_NAME" | awk -F. -v OFS=. '{$3=$3+1; print}')
-          else
-            NEW_NAME="$CURRENT_NAME"
-          fi
-
-          echo "VERSION_CODE=$NEW_CODE" >> $GITHUB_ENV
-          echo "VERSION_NAME=$NEW_NAME" >> $GITHUB_ENV
-          echo "RELEASE_TAG=v${NEW_NAME}" >> $GITHUB_ENV
-          echo "Bumped version to $NEW_NAME (code: $NEW_CODE, tag: v${NEW_NAME})"
+          echo "VERSION_NAME=${{ steps.semantic-release.outputs.version }}" >> $GITHUB_ENV
+          echo "RELEASE_TAG=${{ steps.semantic-release.outputs.tag }}" >> $GITHUB_ENV
 
       - name: Build Release APK
         run: ./gradlew :app:assembleRelease --no-daemon
@@ -141,72 +104,52 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
-      - name: Generate release notes
-        id: notes
-        uses: actions/github-script@v7
+  build-only:
+    # Separate job for build-only scenarios (skip release)
+    if: "github.event.inputs.skip_release == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          script: |
-            // Try to get the previous release tag
-            const { data: tags } = await github.rest.repos.listTags({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 10
-            });
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
 
-            const releaseTags = tags
-              .map(t => t.name)
-              .filter(t => t.startsWith('v'))
-              .sort((a, b) => {
-                const parse = v => v.replace('v', '').split('.').map(Number);
-                const [aM, aN, aP] = parse(a);
-                const [bM, bN, bP] = parse(b);
-                return (bM - aM) || (bN - aN) || (bP - aP);
-              });
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-            const baseTag = releaseTags.length > 0 ? releaseTags[0] : null;
-            const base = baseTag || 'HEAD~1';
-            const head = context.sha;
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-            let commits;
-            try {
-              const { data } = await github.rest.repos.compareCommits({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                base: base,
-                head: head
-              });
-              commits = data.commits;
-            } catch {
-              // Fallback: get commits from the push event
-              commits = context.payload.commits || [];
-            }
-
-            // Group by conventional commit type
-            const grouped = { feat: [], fix: [], chore: [], other: [] };
-            for (const commit of commits) {
-              const msg = commit.commit.message.split('\n')[0];
-              if (msg.startsWith('feat:')) grouped.feat.push(msg);
-              else if (msg.startsWith('fix:')) grouped.fix.push(msg);
-              else if (msg.startsWith('chore:')) grouped.chore.push(msg);
-              else grouped.other.push(msg);
-            }
-
-            let notes = '## Changes\n\n';
-            if (grouped.feat.length) notes += '### Features\n' + grouped.feat.map(c => `- ${c}`).join('\n') + '\n\n';
-            if (grouped.fix.length) notes += '### Fixes\n' + grouped.fix.map(c => `- ${c}`).join('\n') + '\n\n';
-            if (grouped.chore.length) notes += '### Chores\n' + grouped.chore.map(c => `- ${c}`).join('\n') + '\n\n';
-            if (grouped.other.length) notes += '### Other\n' + grouped.other.map(c => `- ${c}`).join('\n') + '\n';
-
-            return notes;
-          result-encoding: string
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Cache Gradle
+        uses: actions/cache@v4
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: Release ${{ env.VERSION_NAME }}
-          body: ${{ steps.notes.outputs.result }}
-          files: |
-            app/build/outputs/apk/release/app-release.apk
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Decode keystore
+        run: |
+          echo "$RELEASE_KEYSTORE" | base64 -d > $RUNNER_TEMP/release.jks
+          echo "RELEASE_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> $GITHUB_ENV
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+
+      - name: Build Release APK
+        run: ./gradlew :app:assembleRelease --no-daemon
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
