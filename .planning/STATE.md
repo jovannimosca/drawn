@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 Phase: 6
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-04-12
+Last activity: 2026-04-18 - Completed quick task 260418-h7k: Enhance GitHub release workflow
 
 Progress: [███████░░░] 71% (10/14 plans complete)
 
@@ -110,7 +110,13 @@ None yet.
 - ReadingDetailViewModel SavedStateHandle issue fixed — now uses setReadingId() + LaunchedEffect pattern
 - Quick task: Photo attachments added to wizard NotesAndSave step — matches ReadingDetailScreen UX
 
-## Session Continuity
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260418-h7k | Enhance GitHub release workflow: add path filters, override options, and research conventional commits alternatives | 2026-04-18 | b6dd4b4 | [260418-h7k-enhance-github-release-workflow-add-path](./quick/260418-h7k-enhance-github-release-workflow-add-path/) |
+
+### Session Continuity
 
 Last session: 2026-04-12T01:28:40.244Z
 Stopped at: Phase 7 complete
