@@ -70,3 +70,6 @@ bundletool-*.jar
 
 # Kotlin compiler
 .kotlin/
+
+# Node
+node_modules/
