@@ -1,7 +1,7 @@
 {
   "name": "drawn",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "devDependencies": {
     "husky": "^9.1.0",
@@ -18,15 +18,31 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      ["@semantic-release/git", {"assets": ["gradle.properties"]}],
-      ["@semantic-release/exec", {
-        "prepareCmd": "./gradlew :app:assembleRelease --no-daemon"
-      }],
-      ["@semantic-release/github", {
-        "assets": [
-          { "path": "app/build/outputs/apk/release/app-release.apk", "name": "drawn-${nextRelease.version}.apk" }
-        ]
-      }]
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "gradle.properties"
+          ]
+        }
+      ],
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "./gradlew :app:assembleRelease --no-daemon"
+        }
+      ],
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            {
+              "path": "app/build/outputs/apk/release/app-release.apk",
+              "name": "drawn-${nextRelease.version}.apk"
+            }
+          ]
+        }
+      ]
     ]
   }
 }
