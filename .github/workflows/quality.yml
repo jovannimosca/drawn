@@ -16,9 +16,6 @@ jobs:
 
       - name: Commitlint Check
         uses: wagoid/commitlint-github-action@v5
-        with:
-          fromHead: origin/main
-          toHead: HEAD
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
