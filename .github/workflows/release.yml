@@ -10,7 +10,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     # Only trigger on relevant file changes (app code, gradle configs, workflow itself)
     # Excludes: markdown, docs, non-code files to avoid unnecessary CI runs
     paths:
@@ -21,12 +21,12 @@ on:
       - "gradlew.bat"
   # Wait for CI to pass before running release
   workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+    workflows: [ CI ]
+    types: [ completed ]
+    branches: [ main ]
   # Dry-run on pull requests to validate semantic-release config
   pull_request:
-    branches: [main]
+    branches: [ main ]
     paths:
       - "app/**"
       - "*.gradle*"
@@ -35,6 +35,7 @@ on:
       - "gradlew.bat"
       - "package.json"
       - ".commitlintrc.json"
+      - ".github/workflows/**"
 
 concurrency:
   group: release-${{ github.ref }}
@@ -62,13 +63,16 @@ jobs:
         run: npm install
 
       - name: Semantic Release Dry-Run
-        run: npx semantic-release --dry-run
+        uses: cycjimmy/semantic-release-action@v6
+        with:
+          dry_run: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     # Only run if CI workflow succeeded AND commit doesn't contain [skip release]
-    if: "!contains(github.event.head_commit.message, '[skip release]') && github.event.workflow_run.conclusion == 'success'"
+    if: "!contains(github.event.head_commit.message, '[skip release]') &&
+      github.event.workflow_run.conclusion == 'success'"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -104,7 +108,8 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*',
+            '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
