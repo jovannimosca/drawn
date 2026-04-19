@@ -24,6 +24,8 @@
 
 **Requirements**: DECK-01, DECK-02, DECK-03, DECK-04, DECK-05, TAG-01, TAG-02, TAG-03, TAG-04, TAG-05, TAG-06, TAG-07
 
+**Status**: ✅ COMPLETE
+
 **Success Criteria** (what must be TRUE):
 
 1. User can store custom decks with name, description, and card count — custom decks persist across app restarts
@@ -35,7 +37,7 @@
 **Plans**: 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md — Database entities and DAOs for custom decks, tags, and favorites
+- [x] 08-01-PLAN.md — Database entities and DAOs for custom decks, tags, and favorites
 
 ### Phase 9: Repository Layer
 
@@ -125,7 +127,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. Database Schema | 0/1 | Not started | - |
+| 8. Database Schema | 1/1 | ✅ Complete | 2026-04-19 |
 | 9. Repository Layer | 0/1 | Not started | - |
 | 10. ViewModel Layer | 0/1 | Not started | - |
 | 11. UI Implementation | 0/1 | Not started | - |
