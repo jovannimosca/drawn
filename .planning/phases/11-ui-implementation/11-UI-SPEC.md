@@ -107,6 +107,13 @@ Each tab maintains its own navigation stack:
 
 ## Screen Specifications
 
+### Background (ALL TABS)
+- Use existing `NebulaBackground` composable on all tab screens
+- Star motif: 42 deterministic stars with varying alpha (0.14-0.39)
+- Nebula gradient: purple blur in upper-left and center
+- Background color: DarkBackground (#121212)
+- This ensures visual consistency with existing ReadingListScreen
+
 ### Bottom Navigation Bar
 - Height: 80dp (Material 3 standard)
 - Background: DarkSurface (#1E1E1E)
@@ -119,6 +126,7 @@ Each tab maintains its own navigation stack:
 - FAB: Add new deck
 - Tap: Navigate to DeckDetailScreen
 - Long press / context menu: Edit, Delete
+- Background: NebulaBackground (star motif)
 
 ### Deck Detail Screen
 - Header: Deck name, description, edit button
@@ -148,6 +156,7 @@ Each tab maintains its own navigation stack:
 - List with SettingsTile items:
   - App version (display, non-interactive)
   - Backup & Restore (navigation link to Phase 12)
+- Background: NebulaBackground (star motif)
 
 ---
 
@@ -185,6 +194,7 @@ This is not a shadcn/React project — registry vetting not applicable.
 | TagViewModel.kt | PRESET_COLORS |
 | DeckViewModel.kt | DeckListUiState pattern |
 | ReadingListViewModel.kt | Filtering state pattern |
+| NebulaBackground.kt | **Star motif for all tabs** |
 
 ---
 
