@@ -10,18 +10,25 @@ import com.example.drawn.BuildConfig
 import com.example.drawn.data.database.converter.ArcanaTypeConverter
 import com.example.drawn.data.database.converter.DateTypeConverter
 import com.example.drawn.data.database.dao.CardDao
+import com.example.drawn.data.database.dao.CustomCardDao
 import com.example.drawn.data.database.dao.DeckDao
 import com.example.drawn.data.database.dao.ReadingCardDao
 import com.example.drawn.data.database.dao.ReadingDao
 import com.example.drawn.data.database.dao.ReadingPhotoDao
+import com.example.drawn.data.database.dao.ReadingTagDao
 import com.example.drawn.data.database.dao.SpreadDao
+import com.example.drawn.data.database.dao.TagDao
 import com.example.drawn.data.database.entity.CardEntity
+import com.example.drawn.data.database.entity.CustomCardEntity
 import com.example.drawn.data.database.entity.DeckEntity
 import com.example.drawn.data.database.entity.ReadingCardEntity
 import com.example.drawn.data.database.entity.ReadingEntity
 import com.example.drawn.data.database.entity.ReadingPhotoEntity
+import com.example.drawn.data.database.entity.ReadingTagCrossRef
 import com.example.drawn.data.database.entity.SpreadEntity
+import com.example.drawn.data.database.entity.TagEntity
 import com.example.drawn.data.database.migration.MIGRATION_1_2
+import com.example.drawn.data.database.migration.MIGRATION_2_3
 import java.util.concurrent.Executors
 
 @Database(
@@ -31,9 +38,12 @@ import java.util.concurrent.Executors
         SpreadEntity::class,
         ReadingEntity::class,
         ReadingCardEntity::class,
-        ReadingPhotoEntity::class
+        ReadingPhotoEntity::class,
+        CustomCardEntity::class,
+        TagEntity::class,
+        ReadingTagCrossRef::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(DateTypeConverter::class, ArcanaTypeConverter::class)
@@ -44,6 +54,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun readingDao(): ReadingDao
     abstract fun readingCardDao(): ReadingCardDao
     abstract fun readingPhotoDao(): ReadingPhotoDao
+    abstract fun customCardDao(): CustomCardDao
+    abstract fun tagDao(): TagDao
+    abstract fun readingTagDao(): ReadingTagDao
 
     companion object {
         @Volatile
@@ -58,7 +71,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .createFromAsset("database/drawn_prepopulated.db")
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
 
                 if (BuildConfig.DEBUG) {
                     builder.setQueryCallback(
