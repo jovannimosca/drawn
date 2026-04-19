@@ -83,6 +83,8 @@ Accent reserved for: FAB, primary buttons, selected tab indicator, favorite icon
 | Deck List Empty | "No custom decks yet" / "Create your first custom deck to get started" |
 | Tag List Empty | "No tags yet" / "Create tags to organize your readings" |
 | Settings Version | "Version {versionCode} ({versionName})" |
+| Settings App Info Header | "App Info" (category header) |
+| Settings Backup Header | "Backup & Restore" (category header) |
 | Delete Confirmation | "Delete this deck? This action cannot be undone." |
 | Delete Tag | "Delete this tag? It will be removed from all readings." |
 
@@ -153,9 +155,12 @@ Each tab maintains its own navigation stack:
 - Apply / Clear buttons
 
 ### Settings Screen
-- List with SettingsTile items:
-  - App version (display, non-interactive)
-  - Backup & Restore (navigation link to Phase 12)
+- Organized by **categories** (sections with headers):
+  - **App Info** — app version display (non-interactive)
+  - **Backup & Restore** — options for backing up and restoring data
+    - Export / Backup option
+    - Import / Restore option
+- Category headers: bold text, 16sp, padded section dividers
 - Background: NebulaBackground (star motif)
 
 ---
