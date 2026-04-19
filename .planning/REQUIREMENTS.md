@@ -27,10 +27,10 @@
 - [ ] **TAG-01**: User can create custom tags with name and optional color
 - [ ] **TAG-02**: User can assign multiple tags to a reading
 - [ ] **TAG-03**: User can filter reading list by tags
-- [ ] **TAG-04**: User can remove tags from reading
-- [ ] **TAG-05**: User can delete unused tags
-- [ ] **TAG-06**: User can mark readings as favorites
-- [ ] **TAG-07**: User can filter favorites in reading list
+- [x] **TAG-04**: User can remove tags from reading
+- [x] **TAG-05**: User can delete unused tags
+- [x] **TAG-06**: User can mark readings as favorites
+- [x] **TAG-07**: User can filter favorites in reading list
 
 ### Backup/Restore
 
