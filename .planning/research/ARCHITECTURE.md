@@ -1,410 +1,520 @@
-# Architecture Patterns: Drawn
+# Architecture Research: Drawn v1.1 — Custom Decks, Tags, Backup
 
-**Domain:** Local-only Android app with Room Database + Jetpack Compose
-**Researched:** 2026-04-03
+**Domain:** Android local-only tarot reading app
+**Researched:** 2026-04-18
+**Confidence:** HIGH
 
-## Recommended Architecture
+## Executive Summary
 
-Drawn follows Google's recommended **three-layer architecture** (UI → Domain → Data) with **MVVM pattern** and **unidirectional data flow**. For a local-only app, this simplifies to a clean separation without network layers.
+The v1.1 features (custom card decks, reading tags, backup/restore) integrate cleanly with the existing Room/Hilt/Compose architecture through **incremental schema additions** and **new service layers** without requiring refactoring of existing components.
+
+- **Custom Decks** add 2 new tables (`decks`, `custom_cards`) with new DAOs and repositories
+- **Reading Tags** add 2 new tables (`tags`, `reading_tags`) with many-to-many relationship to readings
+- **Backup/Restore** uses JSON export/import via repositories — no new tables needed
+
+All new components follow the existing patterns: sealed UI state, Flow-based queries, Hilt injection, repository abstraction.
+
+## Existing Architecture Context
+
+The current v1.0 architecture follows Clean Architecture with three layers:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        UI Layer                              │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐  │
-│  │  Compose    │  │  Navigation  │  │  Theme/Design      │  │
-│  │  Screens    │  │  Graph       │  │  System            │  │
-│  └──────┬──────┘  └──────┬───────┘  └────────────────────┘  │
-│         │                │                                    │
-│  ┌──────▼────────────────▼───────────────────────────────┐  │
-│  │              ViewModels (StateFlow)                    │  │
-│  │  ReadingListVM │ ReadingDetailVM │ ReadingEntryVM     │  │
-│  │  CardPickerVM  │ DeckEditorVM    │ SettingsVM         │  │
-│  └──────────────────────┬────────────────────────────────┘  │
-└─────────────────────────┼───────────────────────────────────┘
-                          │ Events ↑  State ↓
-┌─────────────────────────▼───────────────────────────────────┐
-│                     Domain Layer (Optional)                   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Use Cases: CreateReading, GetReadingHistory,        │   │
-│  │             SearchReadings, ExportReading            │   │
-│  └──────────────────────┬───────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Domain Models: Reading, Card, Spread, Deck          │   │
-│  │  (pure Kotlin, no Android dependencies)              │   │
-│  └──────────────────────┬───────────────────────────────┘   │
-└─────────────────────────┼───────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                      Data Layer                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Repositories: ReadingRepo, CardRepo, DeckRepo       │   │
-│  │  - Entity ↔ Domain model mapping                     │   │
-│  │  - Flow-based reactive streams                       │   │
-│  └──────────────────────┬───────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  DAOs: ReadingDao, CardDao, SpreadDao, DeckDao       │   │
-│  │  - @Query, @Insert, @Update, @Delete                 │   │
-│  │  - Flow for reads, suspend for writes                │   │
-│  └──────────────────────┬───────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Room Database: AppDatabase                          │   │
-│  │  - Entities: ReadingEntity, CardEntity, etc.         │   │
-│  │  - TypeConverters for complex types                  │   │
-│  └──────────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Local Storage: PhotoManager (camera/gallery)        │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+UI Layer (Compose) → ViewModel (StateFlow) → Repository (Flow) → DAO (Room)
 ```
 
-## Component Boundaries
+Key existing components:
+- **Room Database:** `AppDatabase` with 4 tables (`readings`, `spreads`, `cards`, `reading_cards`, `reading_photos`)
+- **DAOs:** `ReadingDao`, `SpreadDao`, `CardDao`
+- **Repositories:** `ReadingRepository`, `SpreadRepository`, `CardRepository`
+- **ViewModels:** `ReadingListViewModel`, `ReadingDetailViewModel`, `ReadingEntryViewModel`, `CardPickerViewModel`
+- **Navigation:** Navigation Compose 3 with type-safe routes
 
-### UI Layer
+---
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **Compose Screens** | Render UI, handle user input, display state | ViewModels (observe StateFlow, send events) |
-| **Navigation Graph** | Route between screens, pass arguments | Compose Screens (via NavHost) |
-| **Theme System** | Dark mystical theme, typography, colors | All Compose components |
-| **Reusable Components** | CardGrid, SpreadLayout, PhotoViewer, NoteEditor | Screens (composition) |
+## Schema Integration
 
-### ViewModel Layer
+### Database Schema Changes
 
-| ViewModel | Screen | State Exposed | Events Handled |
-|-----------|--------|---------------|----------------|
-| **ReadingListViewModel** | Reading list screen | `StateFlow<ReadingListUiState>` (list, loading, error) | Search, filter, delete reading |
-| **ReadingDetailViewModel** | Reading detail screen | `StateFlow<ReadingDetailUiState>` (reading, cards, photos) | Navigate to edit, delete |
-| **ReadingEntryViewModel** | New/edit reading screen | `StateFlow<ReadingEntryUiState>` (draft reading, selected cards) | Select spread, assign cards, save |
-| **CardPickerViewModel** | Card selection dialog/screen | `StateFlow<CardPickerUiState>` (available cards, selected) | Filter by deck, select/deselect cards |
-| **DeckEditorViewModel** | Custom deck management | `StateFlow<DeckEditorUiState>` (deck list, editing deck) | Create/edit/delete deck, add cards |
+#### New Tables for v1.1
 
-### Domain Layer (Optional but Recommended)
+```
+┌─────────────────────┐     ┌─────────────────────┐
+│       decks          │     │   custom_cards     │
+├─────────────────────┤     ├─────────────────────┤
+│ id (PK)             │     │ id (PK)             │
+│ name                │◄────│ deck_id (FK)        │
+│ description         │     │ name                │
+│ is_default (bool)   │     │ position_index      │
+│ created_at          │     │ image_uri           │
+│ image_uri (cover)   │     │ keywords            │
+└─────────┬───────────┘     │ meaning_upright     │
+          │                 │ meaning_reversed    │
+          │                 │ category            │
+          │                 │ is_reversed_allowed │
+          │                 └─────────────────────┘
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **Domain Models** | Pure data classes (Reading, Card, Spread, Deck) | Repositories (input/output), ViewModels (consumption) |
-| **Use Cases** | Single-responsibility business logic operations | Repositories (data access), ViewModels (orchestration) |
+┌─────────────────────┐     ┌─────────────────────┐
+│        tags         │     │    reading_tags      │
+├─────────────────────┤     ├─────────────────────┤
+│ id (PK)             │     │ reading_id (FK)     │
+│ name                │◄────│ tag_id (FK)         │
+│ color (hex)         │     │ (PK = composite)    │
+│ created_at          │     └─────────────────────┘
+└─────────────────────┘
 
-**Note:** For v1, the domain layer can be kept minimal. Domain models can double as the data transferred between Repository and ViewModel. Use cases become valuable as complexity grows (e.g., export, search with multiple filters).
+┌─────────────────────┐
+│     readings        │  (MODIFIED)
+├─────────────────────┤
+│ id (PK)             │
+│ title               │
+│ spread_id (FK)      │
+│ created_at          │
+│ notes               │
+│ is_favorite (NEW)   │  ←── Boolean column for pin/favorite
+└─────────────────────┘
+```
+
+#### Migration Strategy
+
+The existing database version increments from **1 to 2** with **auto-migration** for simple additions:
+
+```kotlin
+@Database(
+    entities = [
+        ReadingEntity::class,
+        SpreadEntity::class,
+        CardEntity::class,
+        ReadingCardEntity::class,
+        ReadingPhotoEntity::class,
+        // NEW v1.1 entities
+        DeckEntity::class,
+        CustomCardEntity::class,
+        TagEntity::class,
+        ReadingTagEntity::class
+    ],
+    version = 2,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ],
+    exportSchema = true
+)
+abstract class AppDatabase : RoomDatabase()
+```
+
+Room auto-migration handles:
+- Adding new tables (`decks`, `custom_cards`, `tags`, `reading_tags`)
+- Adding new column (`is_favorite` to readings)
+
+No complex schema changes = auto-migration sufficient.
+
+---
+
+## Component Integration
 
 ### Data Layer
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **Repositories** | Single source of truth, entity↔domain mapping, Flow streams | DAOs (database), PhotoManager (storage), Domain layer |
-| **DAOs** | Database operations, typed queries | Room Database (direct access) |
-| **Room Database** | SQLite abstraction, schema management, migrations | DAOs (provides instances) |
-| **PhotoManager** | Camera capture, gallery selection, file storage | Android MediaStore, file system |
+#### New DAOs (add to existing DAOs)
 
-## Data Flow
+| DAO | New Methods | Purpose |
+|-----|-------------|---------|
+| `DeckDao` | `getAllDecks()`, `getDeckById()`, `insertDeck()`, `updateDeck()`, `deleteDeck()` | CRUD for custom decks |
+| `CustomCardDao` | `getCardsForDeck()`, `insertCard()`, `updateCard()`, `deleteCard()` | CRUD for custom cards |
+| `TagDao` | `getAllTags()`, `getTagsForReading()`, `insertTag()`, `updateTag()`, `deleteTag()` | CRUD for tags |
+| `ReadingTagDao` | `addTagToReading()`, `removeTagFromReading()`, `getTagsForReading()` | Many-to-many management |
+| `ReadingDao` | Add `updateFavorite()`, `getFavoriteReadings()` | Pin/favorite feature |
 
-### Unidirectional Data Flow Pattern
+#### New Repositories
 
-```
-User Action → Compose Screen → ViewModel Event → Repository → DAO → Room DB
-                                                                         ↓
-Room DB → DAO (Flow emission) → Repository (map to domain) → ViewModel (update StateFlow) → Compose Screen (recompose)
-```
+| Repository | Wraps | New Features |
+|------------|-------|---------------|
+| `DeckRepository` | `DeckDao`, `CustomCardDao` | Custom deck CRUD, card management |
+| `TagRepository` | `TagDao`, `ReadingTagDao` | Tag CRUD, reading association |
+| `BackupRepository` | All DAOs via `AppDatabase` | JSON export/import service |
 
-### Concrete Example: Saving a Reading
+#### Existing Repository Changes
 
-```
-1. User taps "Save" on ReadingEntryScreen
-2. Screen calls: viewModel.saveReading()
-3. ViewModel validates draft, calls: repository.createReading(reading)
-4. Repository maps domain Reading → ReadingEntity
-5. Repository calls: readingDao.insert(readingEntity)  // suspend function
-6. Room inserts row, triggers Flow emission
-7. DAO emits updated reading list via Flow
-8. Repository maps entities → domain models
-9. ViewModel's StateFlow updates with new list
-10. ReadingListScreen recomposes with updated data
-```
+- `ReadingRepository` adds: `updateFavorite()`, `getFavoriteReadings()`
+- `CardRepository` needs refactored to support dual source: bundled RWS cards + custom cards
 
-### State Management Pattern
+### ViewModel Layer
+
+#### New ViewModels
+
+| ViewModel | Screen | New State |
+|-----------|--------|-----------|
+| `DeckListViewModel` | Deck management list | `decks: Flow<List<Deck>>`, `selectedDeck`, `isLoading` |
+| `DeckEditorViewModel` | Create/edit deck + cards | `deck: Deck`, `cards: List<CustomCard>`, `editingCard` |
+| `CardPickerViewModel` (MODIFIED) | Card selection | Add `availableDecks`, `selectedDeck` filter |
+| `TagManagerViewModel` | Tag CRUD screen | `tags: Flow<List<Tag>>`, `selectedTag` |
+| `ReadingEntryViewModel` (MODIFIED) | New/edit reading | Add `availableTags`, `selectedTags` multi-select |
+| `ReadingListViewModel` (MODIFIED) | Reading list | Add `filterByTag`, `filterByFavorite` |
+| `BackupViewModel` | Settings > Backup | `backupState: BackupState`, `exportProgress`, `importProgress` |
+
+#### Modifications to Existing ViewModels
+
+- **`CardPickerViewModel`**: Add `selectedDeckId` filter, merge RWS cards + custom cards into single list
+- **`ReadingEntryViewModel`**: Add `selectedTags: Set<Tag>` for tagging readings
+- **`ReadingListViewModel`**: Add `showFavoritesOnly`, `filterByTagId` query parameters
+
+### UI Layer
+
+#### New Screens
+
+| Screen | Purpose | Navigation Route |
+|--------|---------|------------------|
+| `DeckListScreen` | Browse/create/delete decks | `deck-list` |
+| `DeckEditorScreen` | Edit deck name/description, add cards | `deck-editor/{deckId}` |
+| `CardEditorDialog` | Edit individual card details | Modal from DeckEditor |
+| `TagManagerScreen` | CRUD for tags | `tag-manager` |
+| `ReadingListScreen` (MODIFIED) | Add filter chips for tags, favorites | Existing |
+| `ReadingEntryScreen` (MODIFIED) | Add tag selector chip row | Existing |
+| `BackupScreen` | Export/import JSON | `settings/backup` |
+
+#### Navigation Changes
+
+Add new routes to existing NavHost:
 
 ```kotlin
-// UI State sealed class (one per screen)
-sealed class ReadingListUiState {
-    object Loading : ReadingListUiState()
-    data class Success(val readings: List<Reading>) : ReadingListUiState()
-    data class Error(val message: String) : ReadingListUiState()
+// New routes
+sealed class Screen(val route: String) {
+    // ... existing routes
+    object DeckList : Screen("deck-list")
+    object DeckEditor : Screen("deck-editor/{deckId}") {
+        fun createRoute(deckId: Long? = null) = "deck-editor/${deckId ?: -1}"
+    }
+    object TagManager : Screen("tag-manager")
+    object Backup : Screen("settings/backup")
 }
+```
 
-// ViewModel exposes StateFlow
-class ReadingListViewModel(
-    private val repository: ReadingRepository
-) : ViewModel() {
-    
-    val uiState: StateFlow<ReadingListUiState> = repository.observeAllReadings()
-        .map { readings -> ReadingListUiState.Success(readings) }
-        .catch { error -> emit(ReadingListUiState.Error(error.message ?: "Unknown error")) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = ReadingListUiState.Loading
-        )
-    
-    fun onSearchQueryChanged(query: String) { ... }
-    fun onDeleteReading(readingId: Long) { ... }
-}
+#### Shared Components
 
-// Compose screen consumes StateFlow
-@Composable
-fun ReadingListScreen(viewModel: ReadingListViewModel = hiltViewModel()) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
-    when (uiState) {
-        is ReadingListUiState.Loading -> LoadingIndicator()
-        is ReadingListUiState.Success -> ReadingList((uiState as ReadingListUiState.Success).readings)
-        is ReadingListUiState.Error -> ErrorMessage((uiState as ReadingListUiState.Error).message)
+| Component | Purpose | Used By |
+|-----------|---------|---------|
+| `DeckCard` | Display deck with cover image | DeckListScreen, CardPickerScreen |
+| `CustomCardGrid` | Grid of custom cards with edit | DeckEditorScreen |
+| `TagChip` | Tag display with color | ReadingEntryScreen, ReadingListScreen |
+| `TagSelector` | Multi-select tag picker | ReadingEntryScreen |
+| `FavoriteToggle` | Star icon toggle | ReadingDetailScreen |
+
+---
+
+## Backup/Restore Data Flow
+
+### Export Flow
+
+```
+User taps "Export" 
+    ↓
+BackupViewModel.exportToJson()
+    ↓
+BackupRepository.exportAllData()
+    ↓
+1. readingDao.getAllReadings() → List<ReadingEntity>
+2. cardDao.getAllCards() → List<CardEntity>
+3. deckDao.getAllDecks() → List<DeckEntity>
+4. customCardDao.getAllCards() → List<CustomCardEntity>
+5. tagDao.getAllTags() → List<TagEntity>
+6. readingTagDao.getAll() → List<ReadingTagEntity>
+    ↓
+Convert all entities to JSON-serializable DTOs (no Room annotations)
+    ↓
+Kotlinx Serialization: Json.encodeToString(BackupData(...))
+    ↓
+Save to user-selected location via Storage Access Framework
+```
+
+### Import Flow
+
+```
+User selects backup file
+    ↓
+BackupViewModel.importFromJson(uri)
+    ↓
+BackupRepository.importAllData(jsonString)
+    ↓
+Json.decodeFromString<BackupData>(jsonString)
+    ↓
+VALIDATION:
+- Check schema version compatibility
+- Validate required fields not null
+- Check for duplicate IDs, handle conflicts
+    ↓
+TRANSACTION (all-or-nothing):
+1. Insert decks (or update if ID exists)
+2. Insert custom_cards
+3. Insert tags
+4. Insert reading_tags
+5. Update readings.is_favorite
+    ↓
+Notify DAOs to refresh Flows
+    ↓
+UI auto-updates via existing Flow subscriptions
+```
+
+### Backup Data Structure
+
+```kotlin
+@Serializable
+data class BackupData(
+    val version: Int = 1,
+    val exportedAt: String, // ISO 8601
+    val appVersion: String,
+    val decks: List<DeckDto>,
+    val customCards: List<CustomCardDto>,
+    val tags: List<TagDto>,
+    val readingTags: List<ReadingTagDto>,
+    val readings: List<ReadingDto> // includes is_favorite
+)
+
+@Serializable
+data class DeckDto(
+    val id: Long,
+    val name: String,
+    val description: String?,
+    val isDefault: Boolean,
+    val coverImageUri: String?,
+    val createdAt: Long
+)
+```
+
+---
+
+## New vs. Modified Components
+
+### Components to CREATE (New)
+
+| Layer | Component | Files |
+|-------|-----------|-------|
+| Data | `DeckEntity` | `entity/DeckEntity.kt` |
+| Data | `CustomCardEntity` | `entity/CustomCardEntity.kt` |
+| Data | `TagEntity` | `entity/TagEntity.kt` |
+| Data | `ReadingTagEntity` | `entity/ReadingTagEntity.kt` |
+| Data | `DeckDao` | `dao/DeckDao.kt` |
+| Data | `CustomCardDao` | `dao/CustomCardDao.kt` |
+| Data | `TagDao` | `dao/TagDao.kt` |
+| Data | `ReadingTagDao` | `dao/ReadingTagDao.kt` |
+| Data | `DeckRepository` | `repository/DeckRepository.kt` |
+| Data | `TagRepository` | `repository/TagRepository.kt` |
+| Data | `BackupRepository` | `repository/BackupRepository.kt` |
+| Domain | `Deck` | `model/Deck.kt` |
+| Domain | `CustomCard` | `model/CustomCard.kt` |
+| Domain | `Tag` | `model/Tag.kt` |
+| UI | `DeckListViewModel` | `viewmodel/DeckListViewModel.kt` |
+| UI | `DeckEditorViewModel` | `viewmodel/DeckEditorViewModel.kt` |
+| UI | `TagManagerViewModel` | `viewmodel/TagManagerViewModel.kt` |
+| UI | `BackupViewModel` | `viewmodel/BackupViewModel.kt` |
+| UI | `DeckListScreen` | `ui/screen/deck/DeckListScreen.kt` |
+| UI | `DeckEditorScreen` | `ui/screen/deck/DeckEditorScreen.kt` |
+| UI | `TagManagerScreen` | `ui/screen/tag/TagManagerScreen.kt` |
+| UI | `BackupScreen` | `ui/screen/settings/BackupScreen.kt` |
+
+### Components to MODIFY (Existing)
+
+| Layer | Component | Change |
+|-------|-----------|--------|
+| Data | `ReadingEntity` | Add `isFavorite: Boolean` column |
+| Data | `ReadingDao` | Add `updateFavorite()`, `getFavorites()` |
+| Data | `AppDatabase` | Add new entities to `entities[]`, increment `version = 2` |
+| Data | `ReadingRepository` | Add `updateFavorite()`, `getFavoriteReadings()` |
+| Data | `CardRepository` | Refactor to support both RWS + custom cards |
+| Domain | `Reading` | Add `isFavorite: Boolean` |
+| UI | `CardPickerViewModel` | Add deck filtering, merge card sources |
+| UI | `ReadingEntryViewModel` | Add tag selection |
+| UI | `ReadingListViewModel` | Add filtering by tag/favorite |
+| UI | `NavigationGraph` | Add new routes |
+
+### Components Unchanged (Existing)
+
+- `CardDao` (bundled RWS cards)
+- `SpreadDao`, `SpreadRepository` (spreads unchanged)
+- `ReadingDetailViewModel` (minor addition: show tags)
+- `Theme` system
+- `PhotoManager` (photos unaffected)
+
+---
+
+## Build Order & Dependencies
+
+### Phase 1: Schema Foundation (No dependencies)
+
+**Order:**
+1. Create new entities (`DeckEntity`, `CustomCardEntity`, `TagEntity`, `ReadingTagEntity`)
+2. Add `isFavorite` to `ReadingEntity`
+3. Create new DAOs
+4. Update `AppDatabase` with new entities and migration
+5. Add domain models (`Deck`, `CustomCard`, `Tag`)
+
+**Rationale:** All data layer changes first — no UI dependencies.
+
+### Phase 2: Repository Layer (Depends on Phase 1)
+
+**Order:**
+1. Create `DeckRepository`, `TagRepository`
+2. Update `ReadingRepository` with favorite methods
+3. Create `BackupRepository` with export/import logic
+4. Refactor `CardRepository` to merge RWS + custom
+
+**Rationale:** UI needs repositories to bind against.
+
+### Phase 3: ViewModel Layer (Depends on Phase 2)
+
+**Order:**
+1. Create `DeckListViewModel`, `DeckEditorViewModel`
+2. Create `TagManagerViewModel`
+3. Create `BackupViewModel`
+4. Modify existing ViewModels (`CardPicker`, `ReadingEntry`, `ReadingList`)
+
+**Rationale:** ViewModels depend on repositories.
+
+### Phase 4: UI Layer (Depends on Phase 3)
+
+**Order:**
+1. Create reusable components (`DeckCard`, `TagChip`, `TagSelector`)
+2. Create new screens (`DeckListScreen`, `DeckEditorScreen`, `TagManagerScreen`, `BackupScreen`)
+3. Update existing screens with new features (tag selector, favorite toggle)
+4. Update navigation graph with new routes
+
+**Rationale:** UI depends on ViewModels.
+
+---
+
+## Integration Patterns
+
+### Pattern 1: Dual Card Source in CardPicker
+
+**Problem:** Users must choose from both RWS cards (bundled) and custom cards (user-created).
+
+**Solution:** Merge both sources in repository layer:
+
+```kotlin
+class CardRepository(
+    private val cardDao: CardDao,
+    private val customCardDao: CustomCardDao,
+    private val deckDao: DeckDao
+) {
+    fun getCardsForPicker(selectedDeckId: Long?): Flow<List<Card>> {
+        return when (selectedDeckId) {
+            null -> // "All" selected - show both RWS and custom
+                combine(
+                    cardDao.observeAllRwsCards(),
+                    customCardDao.observeAllCustomCards()
+                ) { rws, custom -> rws.map { it.toDomain() } + custom.map { it.toDomain() } }
+            
+            -1L -> // "RWS Only" 
+                cardDao.observeAllRwsCards().map { it.map { c -> c.toDomain() } }
+            
+            else -> // Specific custom deck
+                customCardDao.getCardsForDeck(selectedDeckId).map { it.map { c -> c.toDomain() } }
+        }
     }
 }
 ```
 
-## Suggested Build Order
+### Pattern 2: Tag Multi-Select in Reading Entry
 
-Based on dependency graph, build components in this order:
+**Problem:** Users tag readings with multiple tags.
 
-### Phase 1: Foundation (No Dependencies)
-1. **Domain Models** — Pure Kotlin data classes (`Reading`, `Card`, `Spread`, `Deck`)
-2. **Room Entities** — Database schema (`ReadingEntity`, `CardEntity`, `SpreadEntity`, `DeckEntity`)
-3. **TypeConverters** — For complex types (dates, enums, lists)
+**Solution:** Chip row with add button, bottom sheet for selection:
 
-### Phase 2: Data Access (Depends on Phase 1)
-4. **DAOs** — Database operations (`ReadingDao`, `CardDao`, `SpreadDao`, `DeckDao`)
-5. **Room Database** — `AppDatabase` class with all entities
-6. **Repositories** — Business logic layer with Flow streams
-
-### Phase 3: ViewModel Layer (Depends on Phase 2)
-7. **ViewModels** — State management for each screen
-8. **Use Cases** (optional) — Complex operations if needed
-
-### Phase 4: UI Layer (Depends on Phase 3)
-9. **Theme System** — Dark mystical theme, colors, typography
-10. **Navigation Graph** — App routing structure
-11. **Reusable Components** — CardGrid, SpreadLayout, PhotoViewer
-12. **Screens** — Compose screens consuming ViewModels
-
-### Phase 5: Integration & Polish
-13. **PhotoManager** — Camera/gallery integration
-14. **Bundled Assets** — RWS card images, default spreads
-15. **Testing** — Unit tests for ViewModels, Repositories, DAOs
-
-## Patterns to Follow
-
-### Pattern 1: Repository as Single Source of Truth
-**What:** All data access goes through repositories, never directly from DAOs in ViewModels.
-**When:** Always — this is the foundation of testability and separation of concerns.
-**Example:**
 ```kotlin
-class ReadingRepository(
-    private val readingDao: ReadingDao,
-    private val cardDao: CardDao
+// ReadingEntryScreen
+@Composable
+fun TagSelector(
+    availableTags: List<Tag>,
+    selectedTags: Set<Tag>,
+    onTagsChanged: (Set<Tag>) -> Unit
 ) {
-    fun observeAllReadings(): Flow<List<Reading>> =
-        readingDao.observeAllReadings()
-            .map { entities -> entities.map { it.toDomain() } }
-            .distinctUntilChanged()
-    
-    suspend fun createReading(reading: Reading): Long =
-        readingDao.insert(reading.toEntity())
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        selectedTags.forEach { tag ->
+            FilterChip(
+                selected = true,
+                onClick = { onTagsChanged(selectedTags - tag) },
+                label = { Text(tag.name) },
+                leadingIcon = { Icon(Icons.Default.Close, null) }
+            )
+        }
+        AssistChip(
+            onClick = { showTagSelectorSheet() },
+            label = { Text("Add Tag") },
+            leadingIcon = { Icon(Icons.Default.Add, null) }
+        )
+    }
 }
 ```
 
-### Pattern 2: Entity-Domain Model Separation
-**What:** Database entities (`@Entity` classes) are separate from domain models (pure data classes).
-**When:** Always — prevents database schema changes from rippling through the entire app.
-**Example:**
+### Pattern 3: Backup as Service (Not UI State)
+
+**Problem:** Backup can be large, needs background processing, must not block UI.
+
+**Solution:** Repository handles backup as suspend function, ViewModel exposes StateFlow for progress:
+
 ```kotlin
-// Database entity
-@Entity(tableName = "readings")
-data class ReadingEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val title: String,
-    val spreadId: Long,
-    val createdAt: Long,
-    val notes: String?
-)
-
-// Domain model (pure Kotlin, no Android annotations)
-data class Reading(
-    val id: Long,
-    val title: String,
-    val spreadId: Long,
-    val createdAt: Instant,
-    val notes: String?
-)
-
-// Conversion extensions
-fun ReadingEntity.toDomain() = Reading(
-    id = id,
-    title = title,
-    spreadId = spreadId,
-    createdAt = Instant.fromEpochMilliseconds(createdAt),
-    notes = notes
-)
-
-fun Reading.toEntity() = ReadingEntity(
-    id = id,
-    title = title,
-    spreadId = spreadId,
-    createdAt = createdAt.toEpochMilliseconds(),
-    notes = notes
-)
-```
-
-### Pattern 3: Flow-Based Reactive Queries
-**What:** DAO queries return `Flow<List<T>>` for automatic UI updates when data changes.
-**When:** For all read operations that feed UI — eliminates manual refresh logic.
-**Example:**
-```kotlin
-@Dao
-interface ReadingDao {
-    @Query("SELECT * FROM readings ORDER BY createdAt DESC")
-    fun observeAllReadings(): Flow<List<ReadingEntity>>
-    
-    @Query("SELECT * FROM readings WHERE id = :id")
-    fun observeReadingById(id: Long): Flow<ReadingEntity?>
-    
-    @Insert
-    suspend fun insert(reading: ReadingEntity): Long
-    
-    @Update
-    suspend fun update(reading: ReadingEntity)
-    
-    @Delete
-    suspend fun delete(reading: ReadingEntity)
+class BackupRepository(
+    private val database: AppDatabase,
+    private val json: Json
+) {
+    suspend fun exportToJson(outputStream: OutputStream, progress: (Float) -> Unit) {
+        progress(0.1f)
+        val readings = database.readingDao().getAllReadingsSync()
+        progress(0.2f)
+        // ... more data fetching ...
+        val backupData = BackupData(...)
+        progress(0.8f)
+        json.encodeToString(backupData)
+        outputStream.write(encoded)
+        progress(1.0f)
+    }
 }
 ```
 
-### Pattern 4: Sealed UI State Classes
-**What:** Each screen has a sealed class representing all possible UI states.
-**When:** Always — makes state handling exhaustive and prevents null checks.
-**Example:** See State Management Pattern above.
-
-### Pattern 5: Dependency Injection with Hilt
-**What:** Use Hilt for dependency injection throughout the app.
-**When:** Always — enables testability, reduces boilerplate, manages lifecycles.
-**Example:**
-```kotlin
-@HiltAndroidApp
-class DrawnApplication : Application()
-
-@Module
-@InstallIn(SingletonComponent::class)
-object DatabaseModule {
-    
-    @Provides
-    @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "drawn_database")
-            .build()
-    
-    @Provides
-    fun provideReadingDao(database: AppDatabase): ReadingDao =
-        database.readingDao()
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-object RepositoryModule {
-    
-    @Provides
-    fun provideReadingRepository(dao: ReadingDao): ReadingRepository =
-        ReadingRepository(dao)
-}
-```
+---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Direct DAO Access from ViewModel
-**What:** Calling DAOs directly from ViewModels without a repository layer.
-**Why bad:** Ties ViewModels to database implementation, makes testing harder, violates separation of concerns.
-**Instead:** Always go through a repository that handles entity↔domain mapping.
+### Anti-Pattern 1: Storing Custom Card Images in Database
 
-### Anti-Pattern 2: Passing Entities to UI Layer
-**What:** Using `@Entity` classes directly in Compose screens.
-**Why bad:** Database schema changes force UI changes, entities carry Android dependencies.
-**Instead:** Map entities to domain models in the repository, pass domain models to ViewModels.
+**What:** Storing images as BLOB in `custom_cards` table.
 
-### Anti-Pattern 3: Blocking Main Thread with Database Operations
-**What:** Calling DAO methods without `suspend` or `Flow`.
-**Why bad:** Causes ANR (Application Not Responding), crashes on main thread.
-**Instead:** Use `suspend` functions for writes, `Flow` for reads. Room enforces this on main thread by default.
+**Why bad:** Bloats database, memory issues, slow queries.
 
-### Anti-Pattern 4: Mutable State in Compose Without Proper Lifecycle
-**What:** Using `mutableStateOf` without considering lifecycle, or collecting flows without `collectAsStateWithLifecycle`.
-**Why bad:** Memory leaks, unnecessary recompositions, crashes on configuration changes.
-**Instead:** Use `collectAsStateWithLifecycle()` for Flow collection, `viewModelScope` for coroutines.
+**Instead:** Store image URI (content:// or file://) in `custom_cards.image_uri`, use Coil to load.
 
-### Anti-Pattern 5: God ViewModel
-**What:** One ViewModel handling all screens and all logic.
-**Why bad:** Becomes untestable, hard to maintain, violates single responsibility.
-**Instead:** One ViewModel per screen/feature, delegate business logic to repositories or use cases.
+### Anti-Pattern 2: Exporting Raw Database File
 
-## Scalability Considerations
+**What:** Copying `.db` file directly.
 
-| Concern | At 100 readings | At 10K readings | At 100K readings |
-|---------|-----------------|-----------------|------------------|
-| **Database queries** | Simple `SELECT *` works | Add pagination with Paging 3 | Add indices, optimize queries |
-| **Photo storage** | Store in app directory | Use MediaStore with thumbnails | Consider compression, lazy loading |
-| **Card images** | Bundle 78 RWS images (~2-5MB) | Same — fixed deck size | Custom decks may need caching |
-| **Memory usage** | Load all readings into memory | Use `Flow` with lazy loading | Implement cursor-based pagination |
-| **Search** | In-memory filtering | Room `LIKE` queries with indices | FTS (Full-Text Search) extension |
+**Why bad:** Version-specific, includes WAL/shm files, not human-readable.
 
-## Database Schema (Proposed)
+**Instead:** JSON export with Kotlinx Serialization — portable, versionable, debuggable.
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   decks         │     │   spreads       │     │   readings      │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ id (PK)         │     │ id (PK)         │     │ id (PK)         │
-│ name            │     │ name            │     │ title           │
-│ description     │     │ description     │     │ spread_id (FK)  │
-│ is_custom       │     │ position_count  │     │ created_at      │
-│ created_at      │     │ positions_json  │     │ notes           │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │                       │         ┌─────────────┘
-         │                       │         │
-┌────────▼────────┐     ┌────────▼─────────▼───────┐
-│   cards         │     │   reading_cards          │
-├─────────────────┤     ├──────────────────────────┤
-│ id (PK)         │     │ id (PK)                  │
-│ deck_id (FK)    │     │ reading_id (FK)          │
-│ name            │     │ card_id (FK)             │
-│ arcana_type     │     │ position_name            │
-│ number          │     │ position_order           │
-│ image_res_id    │     │ interpretation           │
-│ keywords        │     └──────────────────────────┘
-│ meaning_upright │
-│ meaning_reversed│     ┌──────────────────────────┐
-└─────────────────┘     │   reading_photos         │
-                        ├──────────────────────────┤
-                        │ id (PK)                  │
-                        │ reading_id (FK)          │
-                        │ photo_uri                │
-                        │ caption                  │
-                        └──────────────────────────┘
-```
+### Anti-Pattern 3: Deleting Tags Without Cleaning Junction Table
 
-## Testing Strategy
+**What:** Deleting from `tags` table without `ON DELETE CASCADE`.
 
-| Layer | Test Type | Tools | Coverage Target |
-|-------|-----------|-------|-----------------|
-| **DAOs** | Instrumented tests | Room in-memory database, JUnit | 80% |
-| **Repositories** | Unit tests | Mock DAOs, Turbine for Flow testing | 80% |
-| **ViewModels** | Unit tests | Mock repositories, Turbine for StateFlow | 80% |
-| **Use Cases** | Unit tests | Mock repositories | 80% |
-| **UI Components** | Compose tests | Compose Test Rule, semantics | As needed |
+**Why bad:** Orphan rows in `reading_tags`, data corruption.
+
+**Instead:** Use Room's `@ForeignKey(delete = DeleteAction.CASCADE)` or explicit delete in transaction.
+
+### Anti-Pattern 4: Backup Without Validation
+
+**What:** Importing JSON without schema/version checks.
+
+**Why bad:** Crashes on incompatible backups, partial imports.
+
+**Instead:** Validate `backupData.version`, check required fields, wrap in transaction.
+
+---
 
 ## Sources
 
-- [Android Guide to App Architecture](https://developer.android.com/topic/architecture) — HIGH confidence (official docs)
-- [Android Architecture Recommendations](https://developer.android.com/topic/architecture/recommendations) — HIGH confidence (official docs)
-- [Compose UI Architecture](https://developer.android.com/develop/ui/compose/architecture) — HIGH confidence (official docs)
-- [Persist Data with Room Codelab](https://developer.android.com/codelabs/basic-android-kotlin-compose-persisting-data-room) — HIGH confidence (official codelab)
-- [Local DB Design Patterns — Room + Repository + ViewModel](https://dev.to/myougatheaxo/local-db-design-patterns-room-repository-viewmodel-architecture-43bo) — MEDIUM confidence (community, aligns with official guidance)
-- [Room 3.0 Announcement](https://android-developers.googleblog.com/2026/03/room-30-modernizing-room.html) — HIGH confidence (official blog, March 2026)
-- [Now in Android Reference App](https://github.com/android/nowinandroid) — HIGH confidence (official Google sample)
+- [Room Migration Documentation](https://developer.android.com/training/data-storage/room/migrating-db-versions) — HIGH confidence (official)
+- [Room Auto-Migration](https://developer.android.com/reference/kotlin/androidx/room/AutoMigration) — HIGH confidence (official)
+- [Kotlinx Serialization](https://kotlinlang.org/docs/serialization.html) — HIGH confidence (official)
+- [Android Storage Access Framework](https://developer.android.com/guide/topics/providers/document-provider) — HIGH confidence (official)
+- [Backup/Restore Pattern (Medium)](https://medium.com/@vaclav.oujezsky/backup-and-restore-room-database-locally-with-user-interaction-8396a040e433) — MEDIUM confidence (community)
+
+---
+
+*Architecture research for: Drawn v1.1 (custom decks, tags, backup)*
+*Researched: 2026-04-18*

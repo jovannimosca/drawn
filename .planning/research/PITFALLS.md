@@ -1,261 +1,295 @@
-# Domain Pitfalls: Android Tarot Card Reading App
+# Pitfalls Research
 
-**Domain:** Local-only Android app with bundled assets and photo attachments
-**Researched:** 2026-04-03
+**Domain:** Tarot Reading App — Custom Card Decks, Reading Tags, Backup/Restore
+**Researched:** 2026-04-18
+**Confidence:** MEDIUM-HIGH
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data loss, or major user-facing issues.
+### Pitfall 1: Custom Deck Image Storage Without Size Limits
 
-### Pitfall 1: Room Database Migration Corruption
-**What goes wrong:** Adding fields to embedded objects in Room and running migrations corrupts existing user data. When you add a non-null field to an `@Embedded` class and populate it with default values for ALL rows, Room interprets any non-null field as meaning the entire embedded object should be instantiated — converting null sibling fields to their Kotlin defaults (0, false, null). This silently corrupts data for users who never used the feature.
+**What goes wrong:**
+Users import custom deck images (sometimes 100MB+ per image), causing storage bloat and app crashes with "Canvas: trying to draw too large bitmap" errors. The app becomes unusable on devices with limited storage.
 
-**Why it happens:** Room flattens embedded objects into columns but has no concept of the Kotlin object structure. If ANY column of an embedded object is non-null, Room instantiates the whole object, using Kotlin defaults for the remaining null columns.
+**Why it happens:**
+- No image compression or resizing on import
+- No maximum file size validation
+- No thumbnail generation for deck preview
+- Users import high-resolution scans meant for print
 
-**Consequences:** User data silently corrupted — settings reset to defaults, readings lost, photos orphaned. Real post-mortem from a solo dev who lost trust with 26 users in a single rollout. ([Unrushed Apps post-mortem](https://unrushedapps.com/blog/post-mortem-database-migration-error))
+**How to avoid:**
+- Enforce max image dimension (e.g., 1200px) on import with automatic resizing
+- Compress JPEG images to max 500KB
+- Generate thumbnails (200px) for deck picker UI
+- Store original vs thumbnail separately
+- Validate file size before import, reject with clear message
 
-**Prevention:**
-- Only update migration columns for rows where the parent embedded object was already non-null (check a sibling column)
-- Use `fallbackToDestructiveMigration()` ONLY for pre-release apps — never in production
-- Write and test migrations with Room's `MigrationTestHelper` before shipping
-- Use staged rollouts and halt capability on Play Console to limit blast radius
-- Consider making feature-gated data optional at the model level, not just the DB level
+**Warning signs:**
+- Deck editor slow to load previews
+- Storage settings show app using excessive space
+- Bitmap too large errors in logcat
 
-**Detection:** Add data integrity checks on app launch after migration. Log warnings if expected relationships are broken.
+**Phase to address:** Phase 1 — Database Schema & Models (deck editor data layer)
 
-### Pitfall 2: LaunchedEffect Self-Cancellation in Compose
-**What goes wrong:** A `LaunchedEffect` with a state key gets cancelled when that same state changes inside the effect body. This is the most common Compose bug that ships to production.
+---
 
-**Why it happens:** Changing a `LaunchedEffect` key schedules recomposition. The old coroutine is cancelled at the next suspension point (like `delay()`). If you mutate the key state inside the effect, you cancel yourself.
+### Pitfall 2: Tag System Using JSON Column Instead of Relational Tables
 
-**Consequences:** OTP verification never completes, card readings never save, animations freeze mid-flight. Users see infinite spinners. ([Adit Lal, Droidcon India 2025](https://aditlal.dev/compose-bottleneck-antipatterns-performance/))
+**What goes wrong:**
+Storing tags as a JSON array in a text column (e.g., `"[\"love\", \"career\"]"`). Query performance degrades to 400-500ms for 100K rows. Full table scans required for tag filtering. User experience becomes unacceptable.
 
-**Prevention:**
-- Use `LaunchedEffect(Unit)` with `snapshotFlow {}` to observe state changes without restarting the effect
-- Never mutate a LaunchedEffect key inside its own body
-- If you must use a state key, ensure the effect completes before the key changes
+**Why it happens:**
+- Simpler initial implementation (no join tables)
+- Seemed fine during development with small test data
+- Android/Room documentation doesn't emphasize performance for tag queries
+- LIKE-based search on JSON strings performs terribly
 
-```kotlin
-// WRONG — self-cancels
-LaunchedEffect(wasAutoFilled) {
-    if (wasAutoFilled) {
-        wasAutoFilled = false  // Key changes → effect cancelled
-        delay(300)             // Never reaches here
-        saveReading()
-    }
-}
+**How to avoid:**
+- Use proper many-to-many relational schema: `ReadingTag` entity + `ReadingTagCrossRef` junction table
+- Add indices on `tag_id` and `reading_id` in junction table
+- Use JOIN queries instead of LIKE matching
+- Reference: Simon Willison's research shows indexed many-to-many handles 100K rows in <1.5ms vs 400ms+ for JSON
 
-// RIGHT — snapshotFlow decouples observation from lifecycle
-LaunchedEffect(Unit) {
-    snapshotFlow { wasAutoFilled }
-        .filter { it }
-        .collect {
-            wasAutoFilled = false  // Safe — just emits to flow
-            delay(300)
-            saveReading()          // Actually executes
-        }
-}
-```
+**Warning signs:**
+- Tag filter queries take >200ms
+- Tag list UI feels sluggish
+- Scroll performance drops as reading count grows
 
-### Pitfall 3: Mutable Collection Mutation Without Recomposition
-**What goes wrong:** Mutating a `mutableListOf` inside `mutableStateOf` doesn't trigger recomposition because Compose uses reference equality.
+**Phase to address:** Phase 1 — Database Schema & Models (tags data layer)
 
-**Why it happens:** `cartItems.add(item)` mutates the same list object. Compose sees the same reference and skips recomposition.
+---
 
-**Consequences:** Card readings added to a list don't appear in the UI. The database has the data but the screen shows nothing.
+### Pitfall 3: Backup Without Media Files
 
-**Prevention:**
-- Use `mutableStateListOf<T>()` for observable lists
-- Or create new list references: `items = items + newItem`
-- Never mutate collections held in `mutableStateOf`
+**What goes wrong:**
+Backup exports only Room database (JSON), but readings have attached photos stored in app-specific storage. Users restore expecting photos but they are missing. Users lose valuable data.
 
-### Pitfall 4: Events Treated as State (Duplicate Snackbars/Dialogs)
-**What goes wrong:** Using `mutableStateOf<String?>` for one-time events (errors, confirmations) causes them to re-fire on configuration changes.
+**Why it happens:**
+- Database backup is straightforward (Room + JSON export)
+- Media files require different handling (copy files, not database records)
+- Photos are in scoped storage, harder to access programmatically
+- Oversight: "backup" seemed complete during testing (no photos in test data)
 
-**Why it happens:** ViewModel survives configuration change. The state value persists. When the composable recreates, `LaunchedEffect` sees the non-null value and fires again.
+**How to avoid:**
+- Include media directory in backup (copy photos to backup zip)
+- Store relative paths in database, reconstruct on restore
+- Validate backup completeness before restore (manifest file)
+- Handle missing media gracefully during restore (show placeholder, don't crash)
+- Test backup/restore with real photos attached to readings
 
-**Consequences:** Error dialogs show repeatedly on rotation. "Card saved" confirmation appears multiple times. User thinks something is broken.
+**Warning signs:**
+- Backup file suspiciously small for large reading history
+- Restore completes but photos don't appear
+- Users report "incomplete backup"
 
-**Prevention:**
-- Use `Channel<UiEvent>` for one-time events
-- Consume events via `Flow` collection in `LaunchedEffect(Unit)`
-- Never use `mutableStateOf` for events that should fire once
+**Phase to address:** Phase 2 — Backup/Restore Implementation
 
-### Pitfall 5: Bundled Asset Images Causing OOM
-**What goes wrong:** Loading full-resolution tarot card images from `assets/` or `res/drawable` directly into memory causes `OutOfMemoryError`. A typical Rider-Waite tarot deck has 78 cards — if each image is 1-2MB, loading even a few simultaneously can exhaust the heap.
+---
 
-**Why it happens:** Android decodes bitmaps at their native resolution. A 2000x3000px image at ARGB_8888 uses ~24MB of RAM. Three cards = 72MB on a 256MB heap.
+### Pitfall 4: Restore Creates Duplicate Readings
 
-**Consequences:** App crashes on card reveal, especially on low-end devices or when flipping between cards rapidly.
+**What goes wrong:**
+User restores a backup, then accidentally restores again or restores on top of existing data. All readings appear twice (or more). No deduplication logic handles this scenario.
 
-**Prevention:**
-- Use Coil 3.x for image loading — it handles downsampling, caching, and memory management automatically
-- Pre-scale bundled images to display size during build, not at runtime
-- Use `res/drawable-nodpi/` for assets that shouldn't be density-scaled (tarot cards are typically the same physical size regardless of screen density)
-- Consider WebP format for bundled card images — 25-34% smaller than PNG with same quality
-- For card flip animations, preload the next card's image before the flip starts
+**Why it happens:**
+- No unique identifier strategy for imported readings
+- No duplicate detection on restore
+- No "merge" vs "replace" choice for user
+- Assumption: restore only happens on fresh install
 
-### Pitfall 6: ACTION_IMAGE_CAPTURE Inconsistency
-**What goes wrong:** Relying on `ACTION_IMAGE_CAPTURE` intent to take photos produces inconsistent results across camera apps — different orientations, mirroring, thumbnail sizes, and file handling.
+**How to avoid:**
+- Use UUIDs for reading IDs (generated at creation), preserve on restore
+- Check for existing readings with same timestamp + cards before import
+- Offer user choice: "Merge with existing" vs "Replace all"
+- Show preview of what will be imported before confirming
 
-**Why it happens:** The Android contract for `ACTION_IMAGE_CAPTURE` is underspecified. Camera app implementations vary wildly in how they handle EXIF rotation, front-camera mirroring, `EXTRA_OUTPUT` URIs, and thumbnail sizing. (CommonsWare called this "The ACTION_IMAGE_CAPTURE Fallacy" — it's been a known issue since 2015 and remains unresolved.)
+**Warning signs:**
+- Reading count doubles after restore
+- Same reading appears multiple times in history
 
-**Consequences:** User's attached photo appears rotated 90°, mirrored, or as a tiny thumbnail. EXIF orientation header is ignored by `BitmapFactory`.
+**Phase to address:** Phase 2 — Backup/Restore Implementation
 
-**Prevention:**
-- Use Android Photo Picker (`PickVisualMedia`) for selecting existing photos — it returns a content URI with proper permissions
-- For camera capture, use `CameraX` library for consistent behavior instead of `ACTION_IMAGE_CAPTURE`
-- Always read and apply EXIF orientation when loading captured images
-- Use `ActivityResultContracts.TakePicture()` with a pre-created `content://` URI via `FileProvider`
-- Test on multiple OEM camera apps (Samsung, Google, Xiaomi handle this differently)
+---
 
-### Pitfall 7: APK Size Bloat from Unoptimized Assets
-**What goes wrong:** Bundling 78 tarot card images at full resolution makes the APK 50-100MB+, causing users to skip downloading, especially in emerging markets.
+### Pitfall 5: Deck Editor Missing Card Count Validation
 
-**Why it happens:** Developers bundle images at print resolution when screen resolution is sufficient. No resource shrinking configured.
+**What goes wrong:**
+User creates a "custom oracle deck" with only 20 cards, then tries to use it with a Celtic Cross spread (10 cards). App crashes or shows confusing error. Or: user creates deck with gaps in numbering causing display issues.
 
-**Consequences:** Low install conversion rate. Google Play may flag the app as unusually large for its category.
+**Why it happens:**
+- No validation that deck has minimum cards for available spreads
+- No spread-specific card count requirements checked
+- Card numbering assumes consecutive sequence
 
-**Prevention:**
-- Use Android App Bundle (`.aab`) — Play Store delivers only resources needed for each device configuration
-- Enable resource shrinking: `isMinifyEnabled = true` and `isShrinkResources = true` in release build
-- Use WebP format for card images (lossless or lossy at 80-90% quality)
-- Target screen-appropriate resolutions — 1080x1620 is sufficient for even the largest phone screens
-- Consider shipping a base set of cards and downloading additional decks on demand (but this contradicts local-only requirement)
-- Use `res/raw/` for the pre-populated Room database instead of `assets/` — Room's `createFromAsset()` handles it natively
+**How to avoid:**
+- Store `minCardCount` and `maxCardCount` on deck entity
+- Validate deck has enough cards when selected for reading
+- Show clear error: "Deck has X cards but Celtic Cross requires 10"
+- Handle variable-length decks gracefully in UI
 
-## Moderate Pitfalls
+**Warning signs:**
+- User reports "app crashes when I select my deck"
+- Custom deck appears available but isn't usable
 
-### Pitfall 8: State Read Too High in Compose Tree
-**What goes wrong:** Reading scroll state or animation state at the screen level causes the entire screen to recompose on every frame during scroll.
+**Phase to address:** Phase 1 — Database Schema & Models (deck validation)
 
-**Why it happens:** Compose recomposes any composable that reads changed state. Reading `scrollState.firstVisibleItemIndex` at the screen scope means every child recomposes on every scroll event.
+---
 
-**Consequences:** Janky scrolling, dropped frames, battery drain. Card list feels sluggish.
+### Pitfall 6: Tag UI Clutter With Many Tags
 
-**Prevention:**
-- Push state reads as low as possible in the tree
-- Use `derivedStateOf {}` to reduce recomposition frequency
-- Wrap scroll-aware UI in its own composable that reads the state
+**What goes wrong:**
+Reading has 15+ tags. In list view, tags overflow container. On reading detail, tags take up entire screen. User can't tap tags outside visible area. From Tarot Journal Play review: "if I have a large tagging system, the list will just go off-screen, so I can't click on any tags that are outside the box area".
 
-### Pitfall 9: Flip Animation Z-Order and Click Targeting
-**What goes wrong:** In a two-view flip card layout, the "hidden" back view still intercepts touch events even when fully transparent (alpha = 0).
+**Why it happens:**
+- Tags rendered as full-width chips
+- No horizontal scrolling for tag container
+- No "show more" collapse for excessive tags
+- Material 3 chips don't wrap nicely in constrained widths
 
-**Why it happens:** Alpha visibility doesn't affect touch handling. The back view sits on top in the view hierarchy and captures all taps.
+**How to avoid:**
+- Wrap tags (flexbox-style) not horizontal scroll
+- Show max 5 tags, "+N more" button expands full list
+- In detail view, use lazy column for tags
+- Test with 20+ tags to verify UI handles it
 
-**Consequences:** User taps the visible front card but nothing happens — the invisible back view consumed the touch.
+**Warning signs:**
+- Tags cut off on small screens
+- User can't access tags on edge of container
 
-**Prevention:**
-- Toggle `isClickable` and `isFocusable` based on which side is visible
-- Call `bringToFront()` on the visible view after flip completes
-- Or use a single-view flip with content swap at 90° rotation
+**Phase to address:** Phase 1 — Reading Tags UI
 
-### Pitfall 10: Configuration Change Resets Animation State
-**What goes wrong:** Device rotation or multi-window mode resets card flip state to default, leaving cards half-flipped or showing the wrong side.
+---
 
-**Why it happens:** Activity recreation destroys view state. Animation state (`isFrontShowing`, current rotation) is lost.
+### Pitfall 7: Deck Image Path Not Updated on Restore
 
-**Consequences:** Card appears half-rotated after rotation. User loses their place in a reading.
+**What goes wrong:**
+User backs up on device A, restores on device B. Custom deck images fail to load because paths point to device A's storage. Or: custom deck images lost after app reinstall.
 
-**Prevention:**
-- Save flip state in `onSaveInstanceState` / `rememberSaveable`
-- Restore initial state in `onCreate` by setting alpha and rotation explicitly
-- For Compose, use `rememberSaveable { mutableStateOf(isFrontShowing) }`
+**Why it happens:**
+- Image paths stored as absolute paths (e.g., `/data/user/0/com.drawn/files/decks/...`)
+- Backup doesn't include media files
+- New install has different internal storage path
 
-### Pitfall 11: Pre-populated Database Overwrites User Data
-**What goes wrong:** Using `createFromAsset()` or copying a database from assets on every app launch overwrites user-saved readings and photo attachments.
+**How to avoid:**
+- Store images in app-specific directory only (not external)
+- Use relative paths in database (e.g., `decks/uuid/image.png`)
+- On restore, map relative paths to new app directory
+- Include images in backup archive
 
-**Why it happens:** Developer copies the pre-packaged database on each `onCreate` instead of only on first launch, or doesn't check if the database already exists.
+**Warning signs:**
+- Custom deck images blank after restore
+- "File not found" errors in logcat after restore
 
-**Consequences:** User's reading history, saved cards, and attached photos are wiped on every app restart.
+**Phase to address:** Phase 2 — Backup/Restore Implementation
 
-**Prevention:**
-- Use Room's `createFromAsset("database.db")` — it only copies on first launch
-- Or check `File(databasePath).exists()` before copying from assets
-- Separate the pre-populated data (tarot card meanings) from user data (readings, photos) into different tables or databases
+---
 
-### Pitfall 12: RecyclerView/ LazyList Half-Flipped Cards
-**What goes wrong:** In a scrollable list of card readings, recycled ViewHolders or Compose items show half-flipped cards from previous items.
+## Technical Debt Patterns
 
-**Why it happens:** View recycling reuses the view in whatever animation state it was left in. If a card was mid-flip when scrolled off-screen, it appears half-rotated when recycled for a new item.
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Store tags as JSON string | No migration needed, simple schema | Slow queries at scale, no indexing | Never — properly benchmark shows massive difference |
+| Skip image compression | Preserve original quality | Storage bloat, OOM crashes | Only for archive/export feature, not production |
+| Skip backup media files | Simpler implementation | Data loss on restore | Never — incomplete backup is worse than no backup |
+| Use absolute file paths | Easier to debug | Breaks on restore, device-to-device | Never — relative paths always |
+| Skip deck validation | Faster initial feature | Confusing errors, crashes | Only if deck editor disabled after creation |
 
-**Consequences:** Card list shows garbled, partially-rotated cards. Looks broken.
+---
 
-**Prevention:**
-- Always reset alpha and rotation to known values in `onBindViewHolder` or Compose item
-- Cancel ongoing animations when view is recycled
-- Store flip state in the data model, not in the view
+## Integration Gotchas
 
-### Pitfall 13: Memory Leaks from Bitmap References
-**What goes wrong:** Holding `Bitmap` references in long-lived objects (ViewModel, singleton, static fields) prevents garbage collection.
+| Feature | Common Mistake | Correct Approach |
+|---------|----------------|------------------|
+| Photo Picker | Using READ_EXTERNAL_STORAGE (deprecated) | Use system Photo Picker API (no permissions needed) |
+| Scoped Storage | Trying to access app-specific files directly on Android 11+ | Use MediaStore for external, app-specific for internal |
+| Coil Image Loading | Not handling missing images gracefully | Show placeholder, don't crash on null |
+| Room Migration | Backup created with newer schema than app | Validate schema version before restore, show clear error |
 
-**Why it happens:** Bitmaps are large objects. A single tarot card bitmap can be 10-24MB. Holding references means the GC can't reclaim them.
+---
 
-**Consequences:** Gradual memory growth until OOM crash. App works fine for 10 minutes then crashes.
+## Performance Traps
 
-**Prevention:**
-- Never hold Bitmap references in ViewModel or singleton
-- Use Coil's memory cache — it uses LRU eviction with proper size limits
-- Call `bitmap.recycle()` only if manually managing bitmaps (Coil handles this)
-- Use LeakCanary in debug builds to catch leaks early
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| JSON tag queries | Tag filter takes 500ms+ | Relational tables + indices | At ~1000 readings with 5+ tags each |
+| Large deck image loading | App freezes on deck selection | Thumbnail generation, lazy loading | With decks >20 cards, full-size images |
+| Backup with uncompressed media | Backup takes 10+ minutes, huge file | Compress images in backup | With readings containing multiple photos |
+| N+1 query for tags on reading list | Each reading triggers separate tag query | Single JOIN query or batch load | At ~50+ readings displayed |
 
-## Minor Pitfalls
+---
 
-### Pitfall 14: `largeHeap="true"` as a Fix
-**What goes wrong:** Adding `android:largeHeap="true"` to the manifest to avoid OOM errors.
+## Security Mistakes
 
-**Why it happens:** It's the first "fix" found online for OOM. It requests a larger heap from the system but doesn't address the root cause.
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Backup stored in public directory | Other apps can read user data | Use app-private external storage or encrypted internal |
+| No backup validation | Corrupted backup corrupts database | Validate JSON structure before restore, check schema version |
+| Export includes image paths to absolute system paths | Information leak about device | Sanitize paths, don't expose absolute filesystem paths |
 
-**Consequences:** App uses more memory than necessary, gets killed more aggressively by the system, and still OOMs on low-end devices.
+---
 
-**Prevention:** Fix the actual memory issue (downsample images, use proper caching) instead of requesting more heap.
+## UX Pitfalls
 
-### Pitfall 15: Missing Accessibility on Card Flip
-**What goes wrong:** Screen readers announce the wrong side of the card after a flip, or don't announce the flip at all.
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| No way to search by tag in list | User can't find readings by tag | Add filter chips to reading list, tap to filter |
+| Deck selection in wizard forgets selection | User frustrated, must re-select | Persist selection in ViewModel during wizard flow |
+| Backup doesn't show what's included | Users don't know what they're restoring | Show preview: "This backup includes 47 readings, 23 photos" |
+| Restore fails silently on partial data | User thinks backup worked, data missing | Clear success/failure messages, show what succeeded vs failed |
+| Tag creation requires too many taps | Users don't tag readings | Quick-add from reading detail with suggestions |
 
-**Why it happens:** `contentDescription` isn't updated when the card flips. Both views have static descriptions.
+---
 
-**Consequences:** Visually impaired users get confused about which card side they're viewing.
+## "Looks Done But Isn't" Checklist
 
-**Prevention:**
-- Update `contentDescription` on the visible side after each flip
-- Use `announceForAccessibility()` for automatic flips
-- Set `importantForAccessibility="yes"` on both sides
+- [ ] **Custom Deck:** Images stored — but are they included in backup?
+- [ ] **Custom Deck:** Deck shows in picker — but does it have enough cards for spreads?
+- [ ] **Tags:** Tags save to database — but are queries fast enough with 500+ readings?
+- [ ] **Tags:** Tag filter UI works — but does it handle 20 tags without overflow?
+- [ ] **Backup:** JSON exports successfully — but are photos included?
+- [ ] **Restore:** Data loads into database — but are there now duplicates?
+- [ ] **Deck Editor:** User can add cards — but can they re-order or delete cards?
+- [ ] **Reading:** Tags display — but can user filter history by tag?
 
-### Pitfall 16: Data Loss on App Uninstall
-**What goes wrong:** Users uninstall and reinstall the app, losing all reading history and photo attachments.
+---
 
-**Why it happens:** Local-only apps store everything in app-private storage, which is wiped on uninstall.
+## Recovery Strategies
 
-**Consequences:** User loses their entire reading history. Negative reviews.
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Duplicate readings after restore | MEDIUM | Delete duplicates by timestamp+card combination, add deduplication on next restore |
+| Missing photos after restore | LOW | Re-attach photos manually, or use corrupted backup as reference |
+| Slow tag queries | LOW | Add indices to junction table, benchmark shows 100x improvement |
+| Custom deck images broken | MEDIUM | Ask user to re-import deck, or attempt to relocate by matching names |
 
-**Prevention:**
-- This is inherent to local-only design — make it clear to users that data is device-local
-- Consider offering export functionality (JSON/CSV export of readings)
-- Use Android's auto-backup framework (`android:allowBackup="true"`) to preserve data across reinstalls on the same device
+---
 
-## Phase-Specific Warnings
+## Pitfall-to-Phase Mapping
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| **Bundling tarot card images** | APK bloat, OOM on load | WebP format, pre-scale to screen resolution, use Coil |
-| **Pre-populating card meanings DB** | Overwriting user data on launch | Use Room `createFromAsset()`, separate card data from user data |
-| **Card flip animation** | Z-order issues, half-flip on rotation | Toggle `isClickable`, save state in `rememberSaveable` |
-| **Photo attachment from camera** | Rotated/mirrored images, URI permission loss | Use CameraX or Photo Picker, read EXIF orientation |
-| **Saving readings to Room** | Migration corruption on schema change | Write migrations with tests, only update non-null parent rows |
-| **Card reading history list** | Recomposition jank, recycled view corruption | Push state reads low, reset view state in onBind |
-| **Compose state management** | Self-cancelling effects, duplicate events | Use `snapshotFlow`, Channels for one-time events |
+How roadmap phases should address these pitfalls.
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Image storage without limits | Phase 1: Database Schema & Models | Import 10MB image, verify compression to <500KB |
+| JSON tag storage vs relational | Phase 1: Database Schema & Models | Query 100 readings with tags, verify <50ms |
+| Backup missing media | Phase 2: Backup/Restore | Backup reading with photo, restore, verify photo present |
+| Restore duplicates | Phase 2: Backup/Restore | Restore twice, verify no duplicates |
+| Deck card count validation | Phase 1: Database Schema & Models | Create 5-card deck, select Celtic Cross, verify clear error |
+| Tag UI clutter | Phase 1: Reading Tags UI | Add 20 tags to reading, verify no overflow on narrow screen |
+| Deck image paths not portable | Phase 2: Backup/Restore | Backup to device B, restore, verify images load |
+
+---
 
 ## Sources
 
-- [Room Database Migration Post-Mortem — Unrushed Apps](https://unrushedapps.com/blog/post-mortem-database-migration-error) (HIGH — real production incident)
-- [Compose Performance Anti-Patterns — Adit Lal, Droidcon India 2025](https://aditlal.dev/compose-bottleneck-antipatterns-performance/) (HIGH — production experience)
-- [The ACTION_IMAGE_CAPTURE Fallacy — CommonsWare](https://commonsware.com/blog/2015/06/08/action-image-capture-fallacy.html) (HIGH — authoritative, still relevant in 2026)
-- [Flip Card Animation in Android — TheLinuxCode](https://thelinuxcode.com/flip-card-animation-in-android-kotlin-property-animations-and-production-ready-patterns/) (MEDIUM — comprehensive guide)
-- [Android Storage in 2026 — TheLinuxCode](https://thelinuxcode.com/picking-the-right-android-storage-in-2026-internal-files-shared-storage-preferences-and-databases-with-real-kotlin-examples/) (MEDIUM)
-- [Android Developers: Prepopulate Room database](https://developer.android.com/training/data-storage/room/prepopulate) (HIGH — official docs)
-- [Android Developers: Migrate Room database](https://developer.android.com/training/data-storage/room/migrating-db-versions) (HIGH — official docs)
-- [Android Developers: Compose Best Practices](https://developer.android.com/develop/ui/compose/performance/bestpractices) (HIGH — official docs)
-- [Coil Performance Optimizations PR](https://github.com/coil-kt/coil/pull/2795) (HIGH — library source)
-- [Bitmap Memory Management — MoldStud](https://moldstud.com/articles/p-effective-bitmap-memory-management-in-android-prevent-outofmemory-errors) (MEDIUM)
-- [Android largeHeap discussion — LinkedIn](https://www.linkedin.com/posts/amrutha-k-l-a1b37088_large-heaps-in-android-am-i-fixing-the-activity-7429957170177409025-FJ8P) (LOW — social media)
+- **Simon Willison (2026):** SQLite Tags Benchmark comparing 5 strategies — indexed many-to-many <1.5ms vs JSON full table scan 400-500ms
+- **AnkiDroid Issues:** Image handling bugs (#6184 - 100MB image crash, #18744 - gallery attachment crash)
+- **Card-Forge/Android:** Scoped storage issues on Android 11+ (2024)
+- **Tarot Journal Play Store Reviews:** Tag UI overflow issues reported by users
+- **Arcana Land Deck Spec:** Custom deck file structure recommendations (deck.toml format)
+- **Room Documentation:** Many-to-many relationship patterns and query optimization
+- **Android Photo Picker:** System API documentation for permissions-free photo selection
+
+---
+*Pitfalls research for: Tarot Reading App — Custom Card Decks, Reading Tags, Backup/Restore*
+*Researched: 2026-04-18*

@@ -1,156 +1,350 @@
-# Feature Landscape
+# Feature Landscape: Custom Card Decks, Reading Tags, and Backup/Restore
 
-**Domain:** Tarot card reading tracker / journal (Android, local-only)
-**Researched:** 2026-04-03
+**Project:** Drawn v1.1
+**Researched:** 2026-04-18
+**Overall confidence:** HIGH
 
-## Context
+## Executive Summary
 
-Drawn is **not** a tarot reading app (no AI interpretations, no random draws). It is a **reading tracker** — users do physical readings with real cards, then record the results digitally for posterity and pattern-tracking. This distinction is critical: the competitive set is tarot journals and logging tools, not reading generators.
+This research covers three new feature areas for Drawn v1.1: custom card decks, reading tags, and backup/restore. The research draws from existing tarot apps in the ecosystem (Uni Tarot, Paper Tape Tarot, Deckible, Tarot Journal) to identify table stakes, differentiators, and anti-features. All three features are achievable with the existing Kotlin + Jetpack Compose + Room stack. Key dependencies are identified: custom decks require the existing card selection UI to be deck-aware; tags require the metadata model to be extended; backup/restore requires structured JSON serialization (already planned via Kotlinx Serialization).
 
-Key competitors in this space:
-- **Tarot Journal** (Google Play, 4.6★, 5K+ downloads) — closest direct competitor
-- **Oracle Journal** (upcoming) — tarot/oracle digital journal with photos + notes
-- **Tarot Journal by Steve Godfrey** (iOS, 63K+ downloads, 4.6★) — professional workspace
-- **Labyrinthos** — includes a reading journal as a secondary feature
-- **Golden Thread Tarot** — abandoned but pioneered the journal + pattern-tracking combo
+## Key Findings Summary
 
----
-
-## Table Stakes
-
-Features users expect in any tarot reading tracker. Missing = product feels incomplete.
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Record reading with spread + cards** | Core use case — users need to log what cards appeared in which positions | Medium | Form-style entry (freeform, not shuffle). Spread picker → card assignment per position |
-| **Browse reading history** | Users need to revisit past readings | Low | Chronological list, pagination or lazy loading |
-| **View reading details** | Full context of a past reading | Low | Display spread layout, assigned cards, notes, photos |
-| **Text notes on readings** | Users record interpretations, feelings, outcomes | Low | Freeform text field per reading |
-| **Photo attachments** | Users photograph their physical card layouts | Medium | Camera capture + gallery picker. Multiple photos per reading |
-| **Standard 78-card RWS deck** | The universal reference deck | Low | Bundled images, visual card picker (grid/list) |
-| **Common spreads (3-5)** | Celtic Cross, Three Card, Past/Present/Future are the most-used spreads | Low | Pre-built spread definitions with named positions |
-| **Search past readings** | Users need to find specific readings by keyword | Medium | Full-text search across notes, card names, dates |
-| **Edit existing readings** | Users make mistakes or add retrospective notes | Low | Same form as creation, pre-populated |
-| **Delete readings** | Privacy control — users may want to remove readings | Low | With confirmation dialog |
+| Feature | Table Stakes | Complexity | Dependencies |
+|---------|-------------|------------|-------------|
+| Custom Card Decks | Deck editor with name, cards, images, meanings | Medium | Card selection UI, image picker |
+| Reading Tags | Tag CRUD, filter readings by tag | Low | Reading model extension |
+| Backup/Restore | JSON export/import to device storage | Medium | File picker, serialization |
 
 ---
 
-## Differentiators
+## Table of Contents
 
-Features that set Drawn apart from basic tarot journals. Not expected, but valued.
+1. [Custom Card Decks](#1-custom-card-decks)
+2. [Reading Tags](#2-reading-tags)
+3. [Backup/Restore](#3-backuprestore)
+
+---
+
+## 1. Custom Card Decks
+
+### What Users Expect (Table Stakes)
+
+The following features are expected in any tarot app that supports custom decks. Missing any of these results in an incomplete product feel.
+
+| Feature | Description | Why Expected | Complexity |
+|---------|-------------|-------------|------------|
+| Deck name and description | Name displayed in deck selector, description for context | Users need to identify which deck they are using | Low |
+| Add/remove cards | CRUD operations for individual cards within a deck | Custom decks may have non-standard card counts (22, 36, 79 cards per Uni Tarot) | Medium |
+| Card image upload | Capture or select image for each card | Core to tarot — users want their own artwork/photography | Medium |
+| Card title/name | Editable name for each card | Different decks use different names | Low |
+| Card meaning/description | Editable text explaining card interpretation | Users create their own guidebook | Low |
+| Reversed meaning | Optional separate text for reversed orientation | Standard tarot practice (per Paper Tape Tarot, Uni Tarot) | Low |
+| Search cards | Find cards by name, description, keywords | Decks with 78+ cards need searchability | Low |
+| Deck activation toggle | Enable/disable custom deck without deletion | Users may have multiple decks | Low |
+
+### What Differentiates (Differentiators)
+
+These features add value but are not strictly required. They set the product apart.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Custom card decks** | Users own oracle decks, alternative tarot decks (Thoth, indie creators). Supporting these makes Drawn the go-to tracker for serious practitioners | High | Full deck editor: name, description, card images, keywords, categories, meanings. Import via camera/gallery |
-| **Reading statistics** | "What cards appear most often?" — pattern recognition is the #1 reason people journal tarot | Medium | Card frequency analysis, suit distribution, Major vs Minor Arcana ratios, date-based trends |
-| **Pin/favorite readings** | Some readings are profoundly meaningful — users want quick access to them | Low | Boolean flag, surfaced at top of history |
-| **Folder/tag organization** | Users group readings by theme (love, career, shadow work), deck used, or intention | Medium | Many-to-many tagging system. Filter history by tag |
-| **Querent name field** | Professional readers track readings for specific clients | Low | Optional text field per reading |
-| **Date/time auto-capture** | Readings are time-sensitive — users want automatic timestamping | Low | Auto-set on creation, editable |
-| **Reversed card support** | Many readers use reversals; the app should reflect this | Low | Toggle per reading or global setting. Visual indicator on card display |
-| **Spread library** | Curated collection of spreads beyond the basics, with position descriptions | Medium | Browseable catalog with spread diagrams and position meanings |
-| **Export reading** | Users want to share readings (with querents, on social media, in study groups) | Medium | PDF or image export of a single reading with card layout |
-| **Dark mystical theme** | Tarot community expects atmospheric, immersive design — not a sterile white UI | Medium | Dark purples, golds, starry aesthetics. Core to the brand identity |
+| Card keywords/tags | Label cards with keywords for cross-deck search | Low | Enables finding "love" cards across all decks |
+| Deck duplication | Clone existing deck as starting point | Low | Template from RWS for modifications |
+| Category grouping | Group cards by Major Arcana, suits, elemental categories | Low | Aligns with standard tarot structure |
+| Mixed deck reading | Draw from multiple custom decks in one reading | High | Premium feature in Deckible, complex UI |
+| Deck image/cover | Custom thumbnail for deck selector | Low | Visual personalization |
+| Deck import/export | Share decks with other users | Medium | Requires file format definition |
 
----
-
-## Anti-Features
-
-Features to explicitly NOT build. These conflict with Drawn's philosophy or target audience.
+### Anti-Features (Explicitly NOT Build)
 
 | Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **AI-generated readings** | Drawn is a tracker, not an interpreter. AI readings shift the product category and violate the "record your own readings" philosophy. Users who want AI have dedicated apps (Taroscoper, aimag.me) | Provide rich card reference data (meanings, keywords) so users can interpret themselves |
-| **Random/shuffle card draw** | Users do physical readings. A digital draw feature encourages screen-based reading instead of physical practice, which the tarot community actively resists | Freeform entry only — the app records, it doesn't read |
-| **Cloud sync / accounts** | Violates the local-only, privacy-first design. Tarot readings are deeply personal; many users explicitly avoid apps that upload their data | Local Room database. Future: optional export/import for manual backup |
-| **Social features / sharing readings publicly** | Tarot readings are private. Social features (leaderboards, shared feeds) feel invasive and misaligned with the introspective nature of the practice | Private export (PDF/image) for user-initiated sharing only |
-| **Live reader marketplace** | Connects users to human readers for paid sessions. This is a completely different business model (Tarot Life, Keen, Sanctuary) | Not applicable — Drawn is a personal tool, not a service platform |
-| **Daily horoscope / astrology integration** | Feature bloat. Users who want astrology have Co-Star, The Pattern, Sanctuary. Dilutes Drawn's focused value proposition | Stay focused on tarot tracking |
-| **Gamification / streaks / points** | Turns introspection into a chore. Tarot journaling is reflective, not competitive. Labyrinthos uses gamification for learning, but that's a different product category | Let intrinsic motivation drive usage |
-| **Push notifications for "daily draw"** | Would require implementing a draw feature (anti-feature above) and feels pushy for a journal app | Users open the app when they have a reading to record |
-| **Ads or subscription paywalls** | F-Droid distribution requires no proprietary dependencies. The tarot community strongly resents paywalled journal features (see Galaxy Tarot backlash) | Free and open source. No monetization in v1 |
+|--------------|-----------|------------------|
+| In-app deck store/marketplace | Adds complexity, backend requirements, curation burden | Focus on local-only custom deck editing |
+| Deck version control | Over-engineering for personal app | Simple overwrite, no need for version history |
+| Cloud deck sync | Violates local-only constraint | Manual backup/restore serves this need |
+| AI-generated card meanings | Unnecessary, unreliable | User provides their own meanings |
+
+### Feature Dependencies
+
+```
+Card Selection Screen
+    ↓ (must be deck-aware)
+Deck Selector
+    ↓
+Deck Editor
+    ↓
+    ├── Card Editor (image, name, meaning, reversed)
+    ├── Deck Settings (name, description, activation)
+    └── Card List (search, filter, reorder)
+```
+
+**Critical dependency:** The existing card selection UI (from v1.0) must be updated to support deck selection before the deck editor can be used. The card selection flow currently assumes a single hardcoded RWS deck. This is the blocking dependency.
+
+### Implementation Notes
+
+- **Image storage:** Custom card images should be stored in app-internal storage (`context.getExternalFilesDir()` or app-specific directory) to avoid MediaStore exposure. Room stores file paths.
+- **Image format:** Support JPEG and PNG. Resize to consistent dimensions (e.g., 600x1000) on import to manage storage.
+- **Deck data model:** Needs `Deck` entity with `id`, `name`, `description`, `isActive`, `createdAt`, `updatedAt`. Card entity links to `deckId`.
+- **Default deck:** RWS deck remains as built-in "system" deck that cannot be deleted, only hidden.
+
+### MVP Recommendation
+
+Prioritize:
+
+1. Deck name and activation toggle (table stakes)
+2. Card image upload via camera/gallery (table stakes — core value)
+3. Card title and meaning editor (table stakes)
+4. Deck selector in card selection flow (dependency enabler)
+
+Defer: Mixed deck reading, deck import/export — these add significant complexity without blocking core use case.
 
 ---
 
-## Feature Dependencies
+## 2. Reading Tags
+
+### What Users Expect (Table Stakes)
+
+Reading tags are a simple organizational feature. Users expect basic tagging capability.
+
+| Feature | Description | Why Expected | Complexity |
+|---------|-------------|-------------|------------|
+| Tag creation | Create new tag with name | Users define their own organization scheme | Low |
+| Tag assignment | Apply tags to readings | Core function — tag reading at creation or edit time | Low |
+| Tag removal | Remove tag from reading | Correct mistakes | Low |
+| Tag filtering | Filter reading list by tag | Find readings by topic (e.g., all "love" readings) | Low |
+| Tag deletion | Delete unused tags | Clean up stale tags | Low |
+
+### What Differentiates (Differentiators)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Tag colors | Color-code tags for visual organization | Low | Visual grouping without creating categories |
+| Tag suggestions | Suggest tags based on past usage | Low | Reduces friction, common pattern |
+| Multi-tag filter | Filter by multiple tags (AND/OR) | Medium | Find readings that match multiple criteria |
+| Reading count per tag | Show reading count next to tag | Low | Helps prioritize, shows usage patterns |
+| Quick filter chips | Filter with tap on tag chips in reading list | Low | Common UX pattern |
+
+### Anti-Features
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|------------------|
+| Hierarchical tags/categories | Adds complexity, conflicts with flat tag simplicity | Use naming conventions (e.g., "area:career") |
+| Nested tags | Over-engineering for personal app | Flat tag list suffices |
+| Tag sharing/sync | Violates local-only constraint | Backup/restore handles转移 |
+
+### Feature Dependencies
 
 ```
-Record reading → requires → Spread selection
-Record reading → requires → Card assignment to positions
-Record reading → optional → Text notes
-Record reading → optional → Photo attachments
-Record reading → optional → Querent name
-Record reading → optional → Tags/folders
-
-Browse history → requires → Reading records exist
-Search readings → requires → Reading records exist
-View reading details → requires → Reading records exist
-
-Reading statistics → requires → Multiple reading records
-Pin readings → requires → Reading records exist
-Export reading → requires → Reading record with cards
-
-Custom decks → optional → Reading card selection (can use custom deck instead of RWS)
-Spread library → optional → Spread selection (extends pre-built spreads)
+Reading List Screen
+    ↓
+Reading Detail/Edit Screen
+    ↓
+Tag Selector (multi-select)
+    ↓
+Tag Entity (many-to-many with Reading)
 ```
 
-### Dependency Graph (ordered by build priority)
+**No blocking dependencies.** Tags can be implemented independently without changes to other features.
+
+### Data Model
+
+Tags are a many-to-many relationship with readings. This avoids duplicating tag names and enables querying readings by tag.
 
 ```
-Phase 1: Foundation
-  └── Standard 78-card RWS deck (bundled)
-  └── Common spreads (3-5 pre-built)
-  └── Record reading (spread + cards + notes)
-  └── Browse reading history
-  └── View reading details
-
-Phase 2: Enrichment
-  └── Photo attachments (depends on: Record reading)
-  └── Search readings (depends on: Browse history)
-  └── Edit/delete readings (depends on: Record reading)
-  └── Reversed card support (depends on: Record reading)
-  └── Dark mystical theme (cross-cutting)
-
-Phase 3: Power User
-  └── Custom card decks (depends on: Card selection)
-  └── Reading statistics (depends on: Multiple reading records)
-  └── Pin/favorite readings (depends on: Browse history)
-  └── Folder/tag organization (depends on: Record reading)
-  └── Spread library (depends on: Spread selection)
-  └── Export reading (depends on: View reading details)
+ReadingEntity (existing)
+    ↓ (many-to-many)
+ReadingTagEntity: readingId, tagId
+    ↓
+TagEntity: id, name, color (optional), createdAt
 ```
+
+### MVP Recommendation
+
+Prioritize:
+
+1. Tag creation and assignment (table stakes)
+2. Tag filtering in reading list (table stakes — enables organization)
+3. Tag deletion (cleanup)
+
+Defer: Tag colors, multi-tag filter — useful but not blocking.
 
 ---
 
-## MVP Recommendation
+## 3. Backup/Restore
 
-**Ship this first:**
-1. Record readings with spread + card assignment (RWS deck, 3 common spreads)
-2. Browse and search reading history
-3. View reading details with notes
-4. Photo attachments (camera + gallery)
-5. Dark mystical theme
+### What Users Expect (Table Stakes)
 
-**Defer to post-MVP:**
-- Custom card decks — high complexity, not needed for initial validation
-- Reading statistics — needs sufficient data to be meaningful
-- Spread library — 3-5 built-in spreads is enough for v1
-- Export — nice-to-have, not core to the recording loop
-- Tags/folders — organization becomes valuable after ~50+ readings
+Local-only apps need local backup. Users expect to export their data and restore it if needed.
 
-**Rationale:** The core loop is "do a physical reading → open app → record it → feel satisfied it's preserved." Everything else optimizes around that loop. Custom decks and statistics are the strongest differentiators but require the foundation to be solid first.
+| Feature | Description | Why Expected | Complexity |
+|---------|-------------|-------------|------------|
+| Export to JSON | Export all readings to JSON file | Standard backup expectation | Medium |
+| Import from JSON | Restore readings from JSON file | Standard restore expectation | Medium |
+| Export to device storage | Save to Downloads/Documents folder | User control over backup location | Medium |
+| Import from file picker | Select file to restore | User control over restore source | Medium |
+| Clear backup destination indicator | Show where file was saved | User knows where to find backup | Low |
+
+### What Differentiates (Differentiators)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Selective export | Export only tagged readings | Filter what gets backed up | Medium |
+| Backup timestamp in filename | Auto-name files with date | Easier file management | Low |
+| Export progress indicator | Show progress for large exports | Better UX for many readings | Low |
+| Merge on import | Combine with existing readings | Avoid data loss | Medium |
+| Custom card images in backup | Include custom deck images | Full backup for custom decks | High |
+| Backup verification | Validate JSON before import | Catch errors early | Low |
+
+### Anti-Features
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|------------------|
+| Cloud backup (Google Drive, etc.) | Violates local-only constraint | Export to local storage, user manages cloud sync |
+| Auto-backup scheduling | Adds background processing, complexity | Manual export is sufficient |
+| Encrypted backup | Unnecessary for personal local app | JSON is human-readable, user can manage encryption |
+| Incremental backup | Over-engineering | Full export is simple and reliable |
+
+### JSON Export Format
+
+The export should be a self-contained JSON file with all reading data.
+
+```json
+{
+  "version": "1.1",
+  "exportedAt": "2026-04-18T12:00:00Z",
+  "readings": [
+    {
+      "id": "uuid",
+      "date": "2026-04-15T10:30:00Z",
+      "spreadId": "celtic-cross",
+      "deckId": "rws",
+      "deckName": "Rider-Waite-Smith",
+      "question": "What should I know about my career?",
+      "cards": [
+        {
+          "position": 1,
+          "cardId": "major_01_high_priestess",
+          "reversed": false,
+          "note": "The High Priestess represents intuition"
+        }
+      ],
+      "notes": "Key insight: trust my inner voice",
+      "tags": ["career", "intuition"],
+      "photos": []
+    }
+  ],
+  "tags": [
+    { "id": "uuid", "name": "career", "color": "#FF5722" }
+  ],
+  "customDecks": [
+    {
+      "id": "uuid",
+      "name": "My Oracle Deck",
+      "description": "Custom 36-card deck",
+      "cards": [
+        {
+          "id": "uuid",
+          "name": "New Beginning",
+          "imagePath": "cards/my_oracle_01.jpg",
+          "meaning": "A fresh start"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Restore Behavior
+
+| Scenario | Behavior | Notes |
+|----------|---------|-------|
+| Import when readings exist | Merge with existing readings | Generate new UUIDs to avoid conflicts |
+| Import when tag already exists | Reuse existing tag | Match by name, case-insensitive |
+| Import when custom deck exists | Prompt user: skip, replace, or create new |三种选项 |
+| Import with missing card images | Log warning, continue import | User can re-add images later |
+| Import corrupted JSON | Show error, do not modify data | Validate before import |
+
+### Feature Dependencies
+
+```
+Backup/Restore Settings
+    ↓
+    ├── Export Flow: JSON serialization → File picker → Save to Downloads
+    └── Import Flow: File picker → JSON parsing → Validation → Merge
+```
+
+**No blocking dependencies.** Uses existing Kotlinx Serialization (already in stack) and platform file picker APIs.
+
+### MVP Recommendation
+
+Prioritize:
+
+1. Full export to JSON (table stakes)
+2. Full import from JSON (table stakes)
+3. File picker integration (enables user control)
+
+Defer: Selective export, merge options — simple full export/import suffices for MVP.
+
+---
+
+## Cross-Feature Dependencies
+
+### Summary Dependency Graph
+
+```
+Custom Decks (v1.1)
+    │
+    ├── Requires: Card Selection UI → Deck Selector
+    │   (blocking — update existing UI)
+    │
+    └── Enables: Card images in backup
+        │
+        └── Backup/Restore (v1.1)
+            │
+            ├── Requires: JSON serialization
+            │   (Kotlinx Serialization — already in stack)
+            │
+            └── Enables: Full deck restore
+                │
+                └── Reading Tags (v1.1)
+                    │
+                    └── No dependencies — can implement independently
+```
+
+### Implementation Order Recommendation
+
+1. **Reading Tags** — Lowest complexity, no dependencies. Implement first to establish data model patterns.
+
+2. **Custom Card Decks** — Medium complexity, requires UI changes. Needs card selection flow update before editor.
+
+3. **Backup/Restore** — Medium complexity, depends on data model. Implement after custom decks to include deck images.
+
+---
+
+## Confidence Assessment
+
+| Feature Area | Confidence | Reason |
+|-------------|------------|--------|
+| Custom Card Decks | HIGH | Multiple reference apps (Uni Tarot, Paper Tape Tarot) demonstrate feasibility |
+| Reading Tags | HIGH | Standard pattern in journaling apps, simple data model |
+| Backup/Restore | HIGH | JSON export is standard pattern, Room + Kotlinx Serialization supports it |
 
 ---
 
 ## Sources
 
-- [Tarot Journal (Google Play) — 4.6★, 5K+ downloads](https://play.google.com/store/apps/details?id=com.tarot_journal) — HIGH confidence (direct competitor, active)
-- [Oracle Journal — upcoming tarot/oracle journal app](https://oraclejournal.app/) — HIGH confidence (official site)
-- [Tarot Journal by Steve Godfrey (iOS) — 63K+ downloads](https://mwm.ai/apps/tarot-journal/1271120458) — HIGH confidence (app store data)
-- [Best Tarot Apps 2026 — TarotLingo comparison](https://tarotlingo.com/best-tarot-apps) — MEDIUM confidence (review site)
-- [Best Tarot Apps & Sites 2026 — Taroscoper](https://www.taroscoper.com/guides/best-tarot-apps-and-sites-compared) — MEDIUM confidence (review site)
-- [7 Best Tarot Apps 2026 — aimag.me](https://aimag.me/blog/best-tarot-apps) — MEDIUM confidence (review by app builder, disclosed bias)
-- [Best Tarot Apps — Stoic Tarot](https://stoictarot.com/2025/12/21/best-tarot-apps-comparison/) — MEDIUM confidence (review site)
-- [Tarot Forums — "Your Favorite Tarot Reading App?"](https://forum.thetarot.guru/t/your-favorite-tarot-reading-app/339) — MEDIUM confidence (community discussion, July 2025)
-- [Labyrinthos App Store listing](https://apps.apple.com/us/app/labyrinthos-tarot-reading/id1155180220) — HIGH confidence (official listing)
-- [Golden Thread Tarot — abandoned journaling pioneer](https://goldenthreadtarot.com) — HIGH confidence (abandoned but historically significant)
+- Uni Tarot app features (Google Play) — https://play.google.com/store/apps/details?id=com.ucdevs.utarot
+- Paper Tape Tarot app (App Store) — https://apps.apple.com/us/app/paper-tape-tarot/id6463463569
+- Deckible digital deck publishing — https://cards.deckible.com/
+- Tarot Journal app (Google Play) — https://play.google.com/store/apps/details?id=com.tarot_journal
+- Galaxy Tarot backup feature — https://galaxy-tarot.apk.gold/
+- Digital tarot journaling practices — https://www.astrologyjuno.com/your-ultimate-guide-to-tarot-journaling-track-your-readings/
+
+---
+
+## Gaps to Address
+
+- **Deck import/export format:** Research did not find a standard community format for sharing tarot decks. Consider proprietary JSON for v1.1.
+- **Card image compression:** No research on optimal compression ratios for tarot card images. Recommend testing on storage usage.
+- **Large reading count performance:** No data on performance at scale (1000+ readings). May need pagination if issues arise in testing.

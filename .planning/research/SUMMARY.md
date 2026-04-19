@@ -1,173 +1,207 @@
 # Project Research Summary
 
 **Project:** Drawn — Android Tarot Card Reading App
-**Domain:** Local-only Android tarot reading tracker / journal
-**Researched:** 2026-04-03
+**Domain:** Local-only Android app for tracking and organizing tarot readings
+**Researched:** 2026-04-18
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Drawn is a **tarot reading tracker** — not a reading generator, not an AI interpreter. Users perform physical tarot readings with real cards, then record the results digitally for posterity and pattern-tracking. The competitive landscape is sparse: existing apps are either basic journals (Tarot Journal, 4.6★) or abandoned pioneers (Golden Thread Tarot). The strongest differentiators are custom deck support and reading statistics, but the core value proposition is a polished, privacy-first recording loop.
+This research covers three major features for Drawn v1.1: custom card decks, reading tags, and backup/restore functionality. The existing Kotlin + Jetpack Compose + Room stack fully supports all three features with only one version update required (Kotlinx Serialization 1.8.0 → 1.9.0 for JSON export). Custom decks require updating the existing card selection UI to be deck-aware, which is the primary blocking dependency. Tags are low-complexity with no dependencies. Backup/restore builds on custom decks and uses standard Android file picker APIs.
 
-The recommended approach is a modern, Compose-only Android app using Kotlin 2.2.x, Navigation Compose 3, Room 2.8.x, and Hilt for DI. No network layer, no cloud sync, no accounts — all data stays local in a Room database. The architecture follows Google's three-layer pattern (UI → Domain → Data) with MVVM, StateFlow-based reactive streams, and sealed UI state classes. This is a well-documented, mainstream Android stack with strong official support.
-
-The key risks are concentrated in three areas: (1) Room database migration corruption — adding fields to embedded objects can silently destroy user data, requiring tested migrations and staged rollouts; (2) Compose anti-patterns — self-cancelling LaunchedEffects, event-vs-state confusion, and mutable collection mutations are the most common production bugs; (3) image handling — bundled card images and camera photos can cause OOM crashes or orientation issues without proper downsampling and EXIF handling. All three have well-documented prevention strategies.
+Key risks identified: image storage limits must be enforced to prevent app crashes, tags must use relational tables (not JSON columns) for query performance, and backups must include media files to avoid data loss. All three features integrate through incremental schema additions without requiring refactoring of existing v1.0 components.
 
 ## Key Findings
 
 ### Recommended Stack
 
-A modern, Compose-first Android stack with all dependencies at stable, production-ready versions. The stack is intentionally local-only — no Retrofit, OkHttp, WorkManager, or Paging 3 needed.
+The v1.0 stack remains valid with one dependency update. Kotlinx Serialization must be bumped from 1.8.0 to 1.9.0 for backup/restore JSON export (1.10.0 requires Kotlin 2.3.0, but project uses Kotlin 2.2.21).
 
 **Core technologies:**
-- **Kotlin 2.2.21** — language — latest stable with mature tooling and full Compose compiler support; 2.3.x exists but 2.2.x has broader library compatibility
-- **Jetpack Compose BOM 2025.12.00** — UI framework — use the BOM to manage all Compose versions consistently, prevents conflicts
-- **Navigation Compose 3 (1.0.1)** — type-safe routing — stable since Nov 2025, eliminates string-based route bugs with `@Serializable` types
-- **Room 2.8.4 + KSP** — local database — Kotlin-first API with suspend functions and Flow support; KSP replaces deprecated kapt for 2x faster builds
-- **Hilt 2.59.2** — dependency injection — compile-time safety, official Compose/ViewModel integration, essential for 80% test coverage mandate
-- **Coil 3.4.0** — image loading — unified API for bundled drawables, camera photos, and gallery images with automatic caching
-- **Material 3 (1.4.0)** — design system — supports Material You dynamic color and dark theme out of the box
-- **JUnit 5 + MockK + Turbine** — testing stack — modern testing with Kotlin-native mocking and Flow testing
+- **Kotlin 2.2.21 + Jetpack Compose BOM 2025.12.00** — UI framework with Material 3
+- **Room 2.8.4** — Local SQLite with Flow support, handles all new entities
+- **Hilt 2.59.2** — Dependency injection with compile-time safety
+- **Coil 3.4.0** — Image loading for bundled and custom card images
+- **Navigation Compose 3 (1.0.1)** — Type-safe routing with @Serializable
+- **Kotlinx Serialization 1.9.0** — JSON backup export/import (UPDATED)
+
+No new external dependencies required for any v1.1 feature.
 
 ### Expected Features
 
-Drawn is a reading tracker, not a reading generator. This distinction shapes the entire feature set.
-
 **Must have (table stakes):**
-- Record reading with spread + card assignment — core use case, form-style entry
-- Browse reading history — chronological list of past readings
-- View reading details — full context with spread layout, cards, notes, photos
-- Text notes on readings — freeform interpretation field
-- Photo attachments — camera capture + gallery picker, multiple per reading
-- Standard 78-card RWS deck — bundled images, visual card picker
-- Common spreads (3-5) — Celtic Cross, Three Card, Past/Present/Future
-- Search past readings — full-text search across notes, card names, dates
-- Edit/delete readings — correction and privacy control
+- **Custom Decks:** Deck editor with name, cards, images, meanings. Card selection UI must be deck-aware before editor can function.
+- **Reading Tags:** Tag CRUD, tag assignment to readings, tag filtering in reading list. Uses many-to-many relationship.
+- **Backup/Restore:** JSON export/import via Storage Access Framework. Full backup includes readings, custom decks, tags, and photos.
 
-**Should have (competitive differentiators):**
-- Custom card decks — oracle decks, alternative tarot decks; makes Drawn the go-to tracker for serious practitioners
-- Reading statistics — card frequency analysis, suit distribution, Major vs Minor Arcana ratios
-- Pin/favorite readings — quick access to profoundly meaningful readings
-- Folder/tag organization — group readings by theme, deck, or intention
-- Reversed card support — toggle per reading or global setting
-- Spread library — curated catalog beyond the basics
-- Export reading — PDF/image export for sharing with querents or study groups
-- Dark mystical theme — dark purples, golds, starry aesthetics; core to brand identity
+**Should have (competitive):**
+- Deck duplication (clone existing deck)
+- Tag colors for visual organization
+- Deck import/export (share between users)
+- Merge on import (combine with existing data)
 
 **Defer (v2+):**
-- Custom card decks — high complexity, not needed for initial validation
-- Reading statistics — needs sufficient data to be meaningful
-- Spread library — 3-5 built-in spreads suffice for v1
-- Export — nice-to-have, not core to the recording loop
-- Tags/folders — organization becomes valuable after ~50+ readings
+- Cloud backup — violates local-only constraint
+- Mixed deck reading (draw from multiple decks)
+- Encrypted backup
+- Deck marketplace/in-app store
 
 ### Architecture Approach
 
-Three-layer architecture (UI → Domain → Data) with MVVM pattern and unidirectional data flow. For a local-only app, this simplifies cleanly without network layers. The domain layer is optional for v1 but recommended for testability.
+The architecture follows Clean Architecture with UI → ViewModel → Repository → DAO layers. v1.1 adds 4 new tables (decks, custom_cards, tags, reading_tags junction) via Room auto-migration from version 1 to 2. New repositories (DeckRepository, TagRepository, BackupRepository) wrap DAOs. Existing CardPickerViewModel must be refactored to merge RWS + custom card sources.
 
 **Major components:**
-1. **UI Layer** — Compose screens, Navigation Graph, Theme System, reusable components (CardGrid, SpreadLayout, PhotoViewer)
-2. **ViewModel Layer** — One ViewModel per screen (ReadingListVM, ReadingDetailVM, ReadingEntryVM, CardPickerVM, DeckEditorVM), each exposing StateFlow<UiState>
-3. **Domain Layer** — Pure Kotlin data classes (Reading, Card, Spread, Deck), optional use cases for complex operations
-4. **Data Layer** — Repositories (single source of truth), DAOs (Room operations), Room Database (SQLite abstraction), PhotoManager (camera/gallery)
-
-**Key patterns:** Repository as single source of truth, entity-domain model separation, Flow-based reactive queries, sealed UI state classes, Hilt dependency injection.
+1. **Data Layer:** 4 new entities, 4 new DAOs, updated AppDatabase (version 2)
+2. **Repository Layer:** DeckRepository, TagRepository, BackupRepository
+3. **UI Layer:** 4 new screens (DeckListScreen, DeckEditorScreen, TagManagerScreen, BackupScreen), modified CardPicker and ReadingEntry screens
+4. **Backup Service:** JSON serialization via Kotlinx Serialization, file I/O via ActivityResultContracts
 
 ### Critical Pitfalls
 
-1. **Room Database Migration Corruption** — Adding non-null fields to `@Embedded` classes silently corrupts existing user data. Prevention: write tested migrations with `MigrationTestHelper`, only update rows where parent object was already non-null, use staged rollouts.
-2. **LaunchedEffect Self-Cancellation** — Mutating a LaunchedEffect key inside its own body cancels the coroutine mid-execution. Prevention: use `LaunchedEffect(Unit)` with `snapshotFlow {}` to observe state changes.
-3. **Mutable Collection Mutation Without Recomposition** — Mutating `mutableListOf` inside `mutableStateOf` doesn't trigger recomposition. Prevention: use `mutableStateListOf<T>()` or create new list references.
-4. **Events Treated as State** — Using `mutableStateOf` for one-time events causes duplicate dialogs/snackbars on rotation. Prevention: use `Channel<UiEvent>` for one-time events.
-5. **Bundled Asset Images Causing OOM** — Full-resolution tarot card images exhaust heap. Prevention: Coil 3 for automatic downsampling, WebP format, pre-scale to screen resolution, use `res/drawable-nodpi/`.
+1. **Custom Deck Image Storage Without Size Limits** — Users import large images causing OOM crashes. Must enforce max 1200px dimension, 500KB compression, generate 200px thumbnails.
+
+2. **Tag System Using JSON Column** — Storing tags as JSON text causes 400-500ms queries at scale. Must use relational many-to-many schema with indices — benchmark shows <1.5ms vs 400ms+.
+
+3. **Backup Without Media Files** — JSON export only captures database, missing photos in app storage. Backup must include media directory or users lose data on restore.
+
+4. **Restore Creates Duplicate Readings** — No deduplication logic causes readings to multiply on repeated restores. Must use UUID preservation and offer merge/replace choice.
+
+5. **Deck Card Count Validation Missing** — User creates deck with too few cards for selected spread, app crashes. Must validate minCardCount against spread requirements.
+
+6. **Tag UI Clutter With Many Tags** — 15+ tags overflow container, tags outside visible area become untappable. Must implement wrap layout with "+N more" collapse.
+
+7. **Deck Image Path Not Portable on Restore** — Absolute paths break across devices. Must use relative paths in database and include images in backup archive.
 
 ## Implications for Roadmap
 
-Based on combined research, suggested phase structure:
+Based on research, suggested phase structure:
 
-### Phase 1: Foundation — Core Data Model & Recording Loop
-**Rationale:** Everything depends on the database schema, domain models, and the ability to record a reading. This is the irreducible core.
-**Delivers:** Room database with schema (readings, cards, spreads, photos tables), domain models, DAOs, repositories, ReadingEntry screen with spread picker and card assignment, ReadingList screen, basic ReadingDetail screen
-**Addresses:** Record reading with spread + cards, browse history, view details, standard 78-card RWS deck, common spreads (3-5)
-**Avoids:** Pre-populated database overwrite (use Room `createFromAsset()`), direct DAO access from ViewModel (repository pattern), blocking main thread (suspend functions)
+### Phase 1: Database Schema & Data Layer
+**Rationale:** All features depend on correct schema design. Tags and custom decks both require new tables. This phase establishes the foundation for all subsequent work.
 
-### Phase 2: Enrichment — Photos, Search, Polish
-**Rationale:** Builds on the recording loop with features that make it production-ready. Photo handling and search are the most complex remaining table-stakes features.
-**Delivers:** PhotoManager with camera/gallery integration, search functionality, edit/delete readings, reversed card support, dark mystical theme system, Navigation Compose 3 graph
-**Addresses:** Photo attachments, search readings, edit/delete, reversed cards, dark mystical theme, date/time auto-capture
-**Avoids:** ACTION_IMAGE_CAPTURE inconsistency (use Photo Picker + CameraX), OOM from images (Coil + WebP), LaunchedEffect self-cancellation, event-vs-state confusion (Channels)
+**Delivers:**
+- 4 new Room entities (DeckEntity, CustomCardEntity, TagEntity, ReadingTagEntity)
+- isFavorite column added to ReadingEntity
+- 4 new DAOs with CRUD operations
+- Domain models (Deck, CustomCard, Tag)
 
-### Phase 3: Power User — Statistics, Organization, Export
-**Rationale:** These features require sufficient reading data to be meaningful and depend on the foundation being solid. They're differentiators but not blockers.
-**Delivers:** Reading statistics (card frequency, suit distribution), pin/favorite readings, tag/folder organization, spread library, export to PDF/image, custom deck editor
-**Addresses:** Custom card decks, reading statistics, pin readings, folder/tag organization, spread library, export reading, querent name field
-**Avoids:** Mutable collection mutation in statistics views, recomposition jank in card lists (push state reads low), APK bloat from custom deck images (WebP + on-demand)
+**Addresses:**
+- Custom Decks (table stakes) — entities and basic CRUD
+- Reading Tags (table stakes) — many-to-many relationship setup
 
-### Phase 4: Testing & Quality — Coverage, CI, Polish
-**Rationale:** 80% test coverage mandate requires dedicated effort. Testing infrastructure should be built alongside features but comprehensive coverage is a final gate.
-**Delivers:** Unit tests for DAOs (in-memory Room), repositories (MockK + Turbine), ViewModels (MockK + Turbine), Compose UI tests, Robolectric tests, Ktlint + Detekt in CI
-**Addresses:** All layers — 80% coverage target
-**Avoids:** God ViewModel anti-pattern (one VM per screen), passing entities to UI layer, memory leaks from Bitmap references
+**Avoids:**
+- Pitfall: JSON column for tags (use relational schema with indices)
+- Pitfall: Image storage without limits (enforce in data layer)
+- Pitfall: Deck card count validation (store minCardCount on entity)
+
+### Phase 2: Repository Layer
+**Rationale:** UI components depend on repositories for data access. Must complete before ViewModels can be implemented.
+
+**Delivers:**
+- DeckRepository (custom deck CRUD, card management)
+- TagRepository (tag CRUD, reading association)
+- BackupRepository (JSON export/import logic)
+- Refactored CardRepository to merge RWS + custom cards
+- Updated ReadingRepository with favorite methods
+
+**Implements:**
+- Architecture pattern: Dual card source in CardPicker
+- Architecture pattern: Tag multi-select data flow
+
+### Phase 3: ViewModel Layer
+**Rationale:** ViewModels provide state management for UI. Depends on repository layer.
+
+**Delivers:**
+- DeckListViewModel, DeckEditorViewModel
+- TagManagerViewModel
+- BackupViewModel with export/import progress
+- Modified CardPickerViewModel (deck filtering)
+- Modified ReadingEntryViewModel (tag selection)
+- Modified ReadingListViewModel (tag/favorite filtering)
+
+### Phase 4: UI Implementation
+**Rationale:** Final UI layer builds on ViewModels. This is the largest phase by line count.
+
+**Delivers:**
+- DeckListScreen, DeckEditorScreen with card editor
+- TagManagerScreen
+- BackupScreen with file picker integration
+- Modified ReadingEntryScreen (tag selector chips)
+- Modified ReadingListScreen (filter chips, favorites)
+- New navigation routes
+
+**Avoids:**
+- Pitfall: Tag UI clutter (implement wrap layout + collapse)
+- Pitfall: Deck selection in wizard forgets selection (persist in ViewModel)
+
+### Phase 5: Backup Media & Validation
+**Rationale:** Must include photos in backup to prevent data loss. Critical feature that requires integration with file system.
+
+**Delivers:**
+- Media directory backup (copy photos to backup archive)
+- Relative path handling for restore portability
+- Backup manifest/validation
+- Restore preview (show what will be imported)
+
+**Avoids:**
+- Pitfall: Backup missing media files
+- Pitfall: Restore creates duplicates
+- Pitfall: Deck image path not portable on restore
 
 ### Phase Ordering Rationale
 
-- **Data before UI:** The architecture mandates building bottom-up — domain models → entities → DAOs → repositories → ViewModels → screens. This is standard Android architecture and well-documented.
-- **Recording before enrichment:** The core loop ("do reading → record it → feel satisfied") must work before any differentiators matter. Features like statistics need data to analyze.
-- **Photos before statistics:** Photo handling is table stakes; statistics are a differentiator. Photos also introduce the most complex external integrations (camera, gallery, EXIF).
-- **Testing as continuous but Phase 4 as gate:** Testing infrastructure is built alongside each phase, but comprehensive 80% coverage is a release gate.
+- **Reading Tags first:** Lowest complexity, no dependencies, establishes data model patterns
+- **Custom Decks second:** Medium complexity, requires card selection UI update (blocking dependency)
+- **Backup third:** Depends on data model, implement after custom decks to include deck images
+- **Backup Media last:** Critical for data integrity, builds on basic backup
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 3 (Custom Decks):** Deck editor UI, image import pipeline, and custom deck storage strategy are high-complexity features with less established patterns. Consider `/gsd-research-phase` for custom deck architecture.
-- **Phase 3 (Export):** PDF/image export of card layouts with proper typography and card rendering needs investigation — no single established Android pattern for this.
+- **Phase 4 (UI Implementation):** Card editor UI patterns for custom decks — limited reference material
+- **Phase 5 (Backup Media):** Android scoped storage edge cases on Android 11+ — complex platform behavior
 
 Phases with standard patterns (skip research-phase):
-- **Phase 1 (Foundation):** Room + Repository + ViewModel is the most well-documented Android pattern. Official Google codelabs and Now in Android reference app provide complete guidance.
-- **Phase 2 (Enrichment):** Photo Picker, Coil, Compose theming, and search are all standard with excellent documentation.
-- **Phase 4 (Testing):** JUnit 5 + MockK + Turbine is a well-established Kotlin testing stack with abundant resources.
+- **Phase 1 (Schema):** Room relationships are well-documented
+- **Phase 2 (Repositories):** Standard repository pattern
+- **Phase 3 (ViewModels):** Standard MVVM with Compose
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All technologies verified against official sources (Google blogs, Maven Central, Coil docs). Version numbers current as of April 2026. Alternatives considered with clear rationale. |
-| Features | HIGH | Competitive analysis based on direct competitor data (Play Store, App Store, official sites). Feature dependencies mapped. Anti-features clearly defined. |
-| Architecture | HIGH | Based on official Google architecture guidance, Now in Android reference app, and official codelabs. Pattern examples included for every major pattern. |
-| Pitfalls | HIGH | Critical pitfalls backed by real post-mortems (Unrushed Apps), Droidcon talks, and CommonsWare analysis. Prevention strategies with code examples provided. |
+| Stack | HIGH | All versions from official sources, single version update identified |
+| Features | HIGH | Reference apps (Uni Tarot, Paper Tape Tarot, Deckible) confirm feasibility |
+| Architecture | HIGH | Clean integration via incremental schema, well-documented patterns |
+| Pitfalls | MEDIUM-HIGH | Some benchmarks extrapolated from web research, Android-specific behavior verified |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **EmbeddedPhotoPicker vs full-screen Photo Picker:** Research recommends EmbeddedPhotoPicker for inline UX but marks it as MEDIUM confidence. Decision should be made during Phase 2 planning based on actual implementation complexity.
-- **Room 3.0 migration timeline:** Room 3.0 is alpha (March 2026, KMP-focused). The research recommends waiting for stable, but the migration path from 2.8.x to 3.x is unknown. Monitor Room 3.0 stable release for potential future migration.
-- **Export format decision:** PDF vs image export for readings — PDF provides better typography but is more complex to implement. Image export is simpler but less flexible. Decision needed during Phase 3 planning.
-- **Custom deck image storage:** How to store user-imported card images (internal storage vs MediaStore vs app-specific directory) needs investigation during Phase 3.
+- **Deck import/export format:** No community standard found — proprietary JSON for v1.1, may need validation during implementation
+- **Card image compression ratios:** Optimal settings not benchmarked — recommend testing with sample images during Phase 1
+- **Large reading count performance:** No data at 1000+ readings — may need pagination if issues arise in testing
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Jetpack Compose December '25 Release](https://www.googblogs.com/whats-new-in-the-jetpack-compose-december-25-release/) — Compose BOM versioning
-- [Jetpack Navigation 3 Stable Announcement](https://android-developers.googleblog.com/2025/11/jetpack-navigation-3-is-stable.html) — Navigation Compose 3
-- [Android Guide to App Architecture](https://developer.android.com/topic/architecture) — Three-layer architecture
-- [Persist Data with Room Codelab](https://developer.android.com/codelabs/basic-android-kotlin-compose-persisting-data-room) — Room patterns
-- [Now in Android Reference App](https://github.com/android/nowinandroid) — Production reference
-- [Coil 3.4.0 Getting Started](https://coil-kt.github.io/coil/getting_started/) — Image loading
-- [Room Database Migration Post-Mortem — Unrushed Apps](https://unrushedapps.com/blog/post-mortem-database-migration-error) — Migration pitfalls
-- [Compose Performance Anti-Patterns — Adit Lal, Droidcon India 2025](https://aditlal.dev/compose-bottleneck-antipatterns-performance/) — Compose pitfalls
-- [The ACTION_IMAGE_CAPTURE Fallacy — CommonsWare](https://commonsware.com/blog/2015/06/08/action-image-capture-fallacy.html) — Camera pitfalls
-- [Android Developers: Prepopulate Room database](https://developer.android.com/training/data-storage/room/prepopulate) — Database prepopulation
+- Jetpack Compose December '25 Release — UI framework version
+- Room 2.8.4 on Maven Repository — Database version
+- Kotlinx Serialization 1.9.0 Release — JSON serialization
+- Android Navigation 3 Stable Announcement — Type-safe navigation
+- Room Auto-Migration documentation — Schema migration
 
 ### Secondary (MEDIUM confidence)
-- [Tarot Journal (Google Play)](https://play.google.com/store/apps/details?id=com.tarot_journal) — Direct competitor analysis
-- [Hilt vs Koin 2025 Comparison (droidcon)](https://www.droidcon.com/2025/11/26/hilt-vs-koin-the-hidden-cost-of-runtime-injection-and-why-compile-time-di-wins/) — DI comparison
-- [Best Tarot Apps 2026 — TarotLingo](https://tarotlingo.com/best-tarot-apps) — Competitive landscape
-- [Local DB Design Patterns — Room + Repository + ViewModel](https://dev.to/myougatheaxo/local-db-design-patterns-room-repository-viewmodel-architecture-43bo) — Architecture patterns
+- Simon Willison SQLite Tags Benchmark — Relational vs JSON performance
+- Tarot Journal app reviews — Tag UI overflow issues
+- Stack Overflow community patterns — Backup/restore implementations
+- Hilt vs Koin 2025 Comparison — DI framework selection
 
 ### Tertiary (LOW confidence)
-- [Android largeHeap discussion — LinkedIn](https://www.linkedin.com/posts/amrutha-k-l-a1b37088_large-heaps-in-android-am-i-fixing-the-activity-7429957170177409025-FJ8P) — Memory management (social media source)
+- Arcana Land Deck Spec — Custom deck file structure (not adopted, reference only)
+- Galaxy Tarot backup feature — APK analysis, not official docs
 
 ---
-*Research completed: 2026-04-03*
+*Research completed: 2026-04-18*
 *Ready for roadmap: yes*

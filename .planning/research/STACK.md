@@ -1,7 +1,8 @@
 # Technology Stack
 
 **Project:** Drawn — Android Tarot Card Reading App
-**Researched:** 2026-04-03
+**Researched:** 2026-04-18
+**For Milestone:** v1.1 — Custom Card Decks, Reading Tags, Backup/Restore
 
 ## Recommended Stack
 
@@ -31,7 +32,7 @@
 |------------|---------|---------|-----|------------|
 | Room | 2.8.4 | Local SQLite database | Latest stable (Nov 2025). Kotlin-first API with suspend functions and Flow support — integrates naturally with Compose's reactive model. Room 3.0 is alpha (March 2026, KMP-focused) — too early for production. | HIGH |
 | Room Compiler (KSP) | 2.8.4 | Annotation processing | Use KSP instead of kapt — 2x faster compilation, Google's recommended path. KSP is the future-proof choice as kapt is deprecated. | HIGH |
-| Kotlinx Serialization | 1.8.0 | Data serialization | Type-safe serialization for Navigation Compose 3 route parameters and any JSON needs. Official Kotlin library with Compose Navigation integration. | HIGH |
+| Kotlinx Serialization | 1.10.0 | Data serialization | **Updated from 1.8.0** — Required for backup/restore JSON export. Version 1.10.0 (Jan 2026) uses Kotlin 2.3.0 but compatible with Kotlin 2.2.x via version 1.9.0. Use 1.9.0 for Kotlin 2.2.x. | HIGH |
 
 ### Dependency Injection
 | Technology | Version | Purpose | Why | Confidence |
@@ -77,6 +78,131 @@
 | Ktlint | 1.5.0+ | Code formatting | Kotlin idiomatic style enforcement. Enforce in CI to maintain consistent code style across contributors. | MEDIUM |
 | Detekt | 1.23.7+ | Static analysis | Kotlin-specific lint rules — catches complexity, style, and potential bugs. Complements Ktlint with deeper code quality checks. | MEDIUM |
 
+---
+
+## v1.1 Feature Additions
+
+### Custom Card Deck Editor
+
+**What's needed:**
+
+| Technology | Already in Stack | New Requirement | Notes |
+|------------|----------------|---------------|----------|
+| Room Entities | Yes (Room 2.8.4) | New entities | Create `Deck`, `DeckCard`, `CardKeyword`, `CardCategory` tables |
+| Image storage | Yes (Coil 3 + Photo Picker) | No new library | Reuse existing system Photo Picker for custom card images |
+| Image display | Yes (Coil 3) | No new library | Reuse Coil for loading custom deck card images |
+| File storage | Android internal storage | No new library | Store custom card images in app-specific directory |
+
+**No new dependencies required.** The existing stack already supports:
+- Room for deck/card/keyword/category entities
+- System Photo Picker for selecting custom card images
+- Coil for loading and displaying images
+- Internal app storage for custom image files
+
+**Database entities needed:**
+
+```
+Deck (id, name, description, coverImagePath, isBuiltIn, createdAt, updatedAt)
+DeckCard (id, deckId, name, description, uprightMeaning, reversedMeaning, imagePath, sortOrder)
+CardKeyword (id, name)
+CardCategory (id, name)
+DeckCardKeyword (deckCardId, keywordId) — junction
+DeckCardCategory (deckCardId, categoryId) — junction
+```
+
+---
+
+### Reading Tags (Many-to-Many)
+
+**What's needed:**
+
+| Technology | Already in Stack | New Requirement | Notes |
+|------------|----------------|---------------|----------|
+| Room Junction | Yes (Room 2.8.4) | Use @Junction | Many-to-many via junction table |
+| Tag entity | Yes (Room) | New entity | Create `Tag` table |
+| ReadingTagCrossRef | Yes (Room) | New entity | Junction table for Reading ↔ Tag |
+
+**No new dependencies required.** Room 2.8.4 already supports `@Junction` annotation for many-to-many relationships (see official docs).
+
+**Database entities needed:**
+
+```
+Tag (id, name, color, createdAt)
+ReadingTagCrossRef (readingId, tagId) — junction table with composite primary key
+```
+
+**Query pattern using @Junction:**
+
+```kotlin
+data class ReadingWithTags(
+    @Embedded val reading: Reading,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(ReadingTagCrossRef::class)
+    )
+    val tags: List<Tag>
+)
+```
+
+---
+
+### Backup/Restore (JSON Export/Import)
+
+**What's needed:**
+
+| Technology | Already in Stack | New Requirement | Notes |
+|------------|----------------|---------------|----------|
+| Kotlinx Serialization | Yes (update to 1.9.0+) | Version bump | 1.8.0 → 1.9.0 or 1.10.0 for JSON export/import |
+| ActivityResultContracts | Yes (Android Platform) | No new library | Use `CreateDocument` and `OpenDocument` for file picker |
+| File I/O | Yes (Android Platform) | No new library | Use ContentResolver to read/write to scoped storage |
+
+**Version update required:**
+
+| Library | Current | Recommended | Why |
+|---------|---------|------------|-----|
+| Kotlinx Serialization | 1.8.0 | 1.9.0+ | Stable JSON APIs, Instant serializers, better error messages. Use 1.9.0 for Kotlin 2.2.x compatibility (1.10.0 requires Kotlin 2.3.0). |
+
+**No new external dependencies required.** Use:
+- Kotlinx Serialization (update version) for JSON ↔ Room entity mapping
+- Android ActivityResultContracts for file picker UI
+- ContentResolver.openOutputStream() / openInputStream() for file I/O
+
+**Export flow:**
+
+```kotlin
+// Use ActivityResultContracts.CreateDocument to let user choose save location
+val exportLauncher = registerForActivityResult(
+    ActivityResultContracts.CreateDocument("application/json")
+) { uri ->
+    uri?.let { saveBackupToUri(it) }
+}
+
+fun saveBackupToUri(uri: Uri) {
+    val json = Json.encodeToString(BackupData.serializer(), backupData)
+    contentResolver.openOutputStream(uri)?.bufferedWriter()?.write(json)
+}
+```
+
+**Import flow:**
+
+```kotlin
+// Use ActivityResultContracts.OpenDocument to let user select backup file
+val importLauncher = registerForActivityResult(
+    ActivityResultContracts.OpenDocument()
+) { uri ->
+    uri?.let { restoreBackupFromUri(it) }
+}
+
+fun restoreBackupFromUri(uri: Uri) {
+    val json = contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+    val backupData = Json.decodeFromString(BackupData.serializer(), json)
+    // Insert into Room database
+}
+```
+
+---
+
 ## Complete Dependency Block
 
 ```kotlin
@@ -117,8 +243,9 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.4.0")
     // Note: coil-network-okhttp NOT needed for local-only app
     
-    // === Serialization (for Navigation routes) ===
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    // === Serialization (UPDATED for backup/restore) ===
+    // Use 1.9.0 for Kotlin 2.2.x (1.10.0 requires Kotlin 2.3.0)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     
     // === Coroutines ===
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
@@ -136,6 +263,8 @@ dependencies {
 }
 ```
 
+---
+
 ## Bundled Assets Strategy
 
 For the 78 Rider-Waite-Smith card images:
@@ -147,6 +276,23 @@ For the 78 Rider-Waite-Smith card images:
 | Compose Multiplatform resources | ❌ Avoid | This is Android-only — no need for CMP resource system. |
 
 **Image format recommendation:** WebP with lossless compression. ~78 cards at ~50-100KB each = ~4-8 MB total APK increase. WebP is natively supported on Android 4.0+ and significantly smaller than PNG.
+
+**Custom card images:** Store in app-internal files directory (no permissions needed):
+
+```kotlin
+// Save custom card image
+fun saveCustomCardImage(context: Context, uri: Uri, cardId: Long): String {
+    val file = File(context.filesDir, "custom_cards/$cardId.jpg")
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        file.outputStream().use { output ->
+            input.copyTo(output)
+        }
+    }
+    return file.absolutePath
+}
+```
+
+---
 
 ## Alternatives Considered
 
@@ -162,6 +308,11 @@ For the 78 Rider-Waite-Smith card images:
 | Testing | JUnit 5 | JUnit 4 | JUnit 4 is legacy. JUnit 5 has better parameterized tests, nested tests, and extension model. |
 | Testing | MockK | Mockito-Kotlin | Mockito's Kotlin integration is a second-class citizen. MockK is built for Kotlin — handles coroutines, objects, and sealed classes natively. |
 | Photo Picker | System Photo Picker | Custom gallery | Building a custom gallery requires READ_EXTERNAL_STORAGE permission (deprecated on Android 13+), reinvents the wheel, and has privacy implications. The system Photo Picker needs no permissions. |
+| Backup format | JSON (kotlinx-serialization) | Manual string parsing | Kotlinx Serialization provides type-safe JSON mapping with compile-time guarantees. Manual parsing is error-prone. |
+| Backup storage | User-selected file | Internal app storage | User-selected via ActivityResultContracts.CreateDocument allows user to save to Downloads, Drive, or other location. |
+| Backup encryption | None (v1.1) | AES encryption | Defer to v1.2. Plain JSON is sufficient for personal use backup. |
+
+---
 
 ## What NOT to Use
 
@@ -175,9 +326,14 @@ For the 78 Rider-Waite-Smith card images:
 | **Paging 3** | Reading history for personal use won't hit pagination scale. Simple `LIMIT` queries suffice. |
 | **Room 3.0 (alpha)** | KMP-focused breaking changes, not stable. Wait for stable release before migrating. |
 | **Material 2** | Deprecated. Material 3 is the current standard with better dark theme support. |
+| **Gson** | Use Kotlinx Serialization instead — Kotlin-native, type-safe, no runtime reflection for serializable classes. |
+| **RoomDatabaseBackup library** | External dependency for simple JSON backup. Use manual JSON export with ActivityResultContracts — no extra dependency, user controls file location. |
+
+---
 
 ## Sources
 
+### v1.0 Stack (unchanged)
 - [Jetpack Compose December '25 Release (1.10.x)](https://www.googblogs.com/whats-new-in-the-jetpack-compose-december-25-release/) — HIGH confidence
 - [Jetpack Navigation 3 Stable Announcement](https://android-developers.googleblog.com/2025/11/jetpack-navigation-3-is-stable.html) — HIGH confidence
 - [Room 2.8.4 on Maven Repository](https://mvnrepository.com/artifact/androidx.room/room-runtime) — HIGH confidence
@@ -188,3 +344,10 @@ For the 78 Rider-Waite-Smith card images:
 - [AGP 9.1.0 Release Notes](https://developer.android.com/build/releases/agp-9-1-0-release-notes) — HIGH confidence
 - [Embedded Photo Picker Documentation](https://developer.android.com/training/data-storage/shared/photo-picker/embedded) — HIGH confidence
 - [Hilt vs Koin 2025 Comparison (droidcon)](https://www.droidcon.com/2025/11/26/hilt-vs-koin-the-hidden-cost-of-runtime-injection-and-why-compile-time-di-wins/) — MEDIUM confidence
+
+### v1.1 Additions (NEW)
+- [Room Many-to-Many Relationships](https://developer.android.com/training/data-storage/room/relationships/many-to-many) — HIGH confidence
+- [Kotlinx Serialization 1.10.0 Release](https://github.com/Kotlin/kotlinx.serialization/releases/tag/v1.10.0) — HIGH confidence
+- [Kotlinx Serialization 1.9.0 for Kotlin 2.2.x](https://github.com/Kotlin/kotlinx.serialization/releases/tag/v1.9.0) — HIGH confidence
+- [Export/Import Room to JSON (Stack Overflow)](https://stackoverflow.com/questions/77649547/how-to-backup-and-restore-kotlin) — MEDIUM confidence
+- [Android Room Database Backup Library](https://github.com/rafi0101/Android-Room-Database-Backup) — MEDIUM confidence (for reference, not recommending)
