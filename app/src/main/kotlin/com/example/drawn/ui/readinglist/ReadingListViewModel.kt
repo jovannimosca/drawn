@@ -22,24 +22,51 @@ class ReadingListViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    private val _selectedTagIds = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedTagIds: StateFlow<Set<Long>> = _selectedTagIds
+
+    private val _showFavoritesOnly = MutableStateFlow(false)
+    val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
 
+    fun onTagFilterChange(tagIds: Set<Long>) {
+        _selectedTagIds.value = tagIds
+    }
+
+    fun onFavoriteFilterChange(showFavoritesOnly: Boolean) {
+        _showFavoritesOnly.value = showFavoritesOnly
+    }
+
+    fun clearFilters() {
+        _selectedTagIds.value = emptySet()
+        _showFavoritesOnly.value = false
+    }
+
     val uiState: StateFlow<ReadingListUiState> = combine(
         readingRepository.observeAllReadingsWithSpread(),
-        searchQuery
-    ) { readings, query ->
-        if (query.isBlank()) {
-            readings
-        } else {
+        searchQuery,
+        selectedTagIds,
+        showFavoritesOnly
+    ) { readings, query, tagIds, favOnly ->
+        var result = readings
+
+        if (query.isNotBlank()) {
             val lowerQuery = query.lowercase()
-            readings.filter { reading ->
+            result = result.filter { reading ->
                 reading.title.lowercase().contains(lowerQuery) ||
                     (reading.notes?.lowercase()?.contains(lowerQuery) == true) ||
                     reading.spreadName.lowercase().contains(lowerQuery)
             }
         }
+
+        if (favOnly) {
+            result = result.filter { it.isFavorite }
+        }
+
+        result
     }
         .map { readings -> ReadingListUiState.Success(readings) as ReadingListUiState }
         .catch { error ->
