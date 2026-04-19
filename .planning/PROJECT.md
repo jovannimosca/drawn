@@ -1,5 +1,9 @@
 # Drawn
 
+## What This Is
+
+A local-only Android app for tarot practitioners who perform physical readings with real cards and want to record, organize, and browse their readings on their phone. Supports custom card decks, reading tags, and device backup/restore.
+
 ## Current State (v1.1 in progress)
 
 Android app with Kotlin + Jetpack Compose, Room database, 78-card RWS deck, 3 built-in spreads, 80% test coverage, GitHub Actions CI/CD with automated releases. Adding custom card decks, reading tags, and backup/restore.
