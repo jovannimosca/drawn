@@ -32,7 +32,10 @@
 4. User can associate multiple tags with single reading — many-to-many relationship works correctly
 5. User can mark readings as favorites — favorite flag persists and is filterable
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md — Database entities and DAOs for custom decks, tags, and favorites
 
 ### Phase 9: Repository Layer
 
