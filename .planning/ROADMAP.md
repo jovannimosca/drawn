@@ -105,7 +105,12 @@ Plans:
 12. User can view app version in Settings — version info displays correctly
 13. User can access backup/restore from Settings — backup screen opens from nav
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Bottom navigation with tabs
+- [ ] 11-02-PLAN.md — Deck management screens
+- [ ] 11-03-PLAN.md — Tag management and Settings
 
 **UI hint**: yes
 
@@ -135,8 +140,8 @@ Plans:
 |-------|----------------|--------|-----------|
 | 8. Database Schema | 1/1 | ✅ Complete | 2026-04-19 |
 | 9. Repository Layer | 2/2 | ✅ Complete | 2026-04-19 |
-| 10. ViewModel Layer | 0/1 | Not started | - |
-| 11. UI Implementation | 0/1 | Not started | - |
+| 10. ViewModel Layer | 1/1 | ✅ Complete | 2026-04-19 |
+| 11. UI Implementation | 3/3 | 📋 Planned | - |
 | 12. Backup/Restore | 0/1 | Not started | - |
 
 ---
