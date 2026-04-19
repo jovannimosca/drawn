@@ -8,6 +8,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.drawn.ui.components.NebulaBackground
 import com.example.drawn.ui.deck.DeckDetailScreen
 import com.example.drawn.ui.deck.DeckListScreen
+import com.example.drawn.ui.settings.SettingsScreen
 
 @Composable
 fun DeckListScreenPlaceholder(
@@ -44,5 +45,6 @@ fun SettingsScreenPlaceholder(
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         NebulaBackground(modifier = Modifier.fillMaxSize())
+        SettingsScreen()
     }
 }
