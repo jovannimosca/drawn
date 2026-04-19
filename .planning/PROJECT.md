@@ -1,8 +1,8 @@
 # Drawn
 
-## Current State (v1.0 shipped 2026-04-12)
+## Current State (v1.1 in progress)
 
-Android app with Kotlin + Jetpack Compose, Room database, 78-card RWS deck, 3 built-in spreads, 80% test coverage, GitHub Actions CI/CD with automated releases.
+Android app with Kotlin + Jetpack Compose, Room database, 78-card RWS deck, 3 built-in spreads, 80% test coverage, GitHub Actions CI/CD with automated releases. Adding custom card decks, reading tags, and backup/restore.
 
 ## Core Value
 
@@ -28,14 +28,20 @@ Users can record a complete tarot reading — spread, cards, notes, and photos �
 - ✓ CI/CD pipeline with automated tests and security scans — v1.0 (Phase 1, 4)
 - ✓ GitHub Actions release workflow with APK builds — v1.0 (Phase 5)
 
-### Active
+### Active (v1.1)
 
 - [ ] Custom card decks with full editor (name, description, image, keywords, categories, meanings)
-- [ ] Pin/favorite readings for quick access
 - [ ] Tag readings with custom labels
+- [ ] Backup/restore readings to local device storage
+- [ ] Pin/favorite readings for quick access
 - [ ] View reading statistics (card frequency, suit distribution)
 - [ ] Expanded spread library beyond 3 built-in spreads
 - [ ] Export readings as PDF or image
+
+### Out of Scope (v1.1)
+
+- Cloud sync or OAuth — local backup only for v1.1
+- F-Droid publication — deferred
 
 ### Out of Scope
 
@@ -44,6 +50,16 @@ Users can record a complete tarot reading — spread, cards, notes, and photos �
 - OAuth or cloud sync — local-only by design
 - iOS or cross-platform — Android-first with Kotlin
 - Video or non-photo attachments — photos only for v1
+
+## Current Milestone: v1.1 Organization & Custom Decks
+
+**Goal:** Enable users to organize readings with tags and favorites, use custom/oracle card decks, and backup/restore their data.
+
+**Target features:**
+- Custom card decks with full editor (name, description, image, keywords, categories, meanings)
+- Tag readings with custom labels
+- Backup/restore readings to local device storage (JSON export/import)
+- Pin/favorite readings for quick access
 
 ## Context
 
@@ -92,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-04-12 after v1.0 milestone*
+*Last updated: 2026-04-18 started v1.1 milestone*
