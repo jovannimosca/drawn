@@ -21,6 +21,11 @@ class DeckRepository(
             .map { entities -> entities.map { it.toDomain() } }
             .distinctUntilChanged()
 
+    fun observeCustomDecks(): Flow<List<Deck>> =
+        deckDao.observeCustomDecks()
+            .map { entities -> entities.map { it.toDomain() } }
+            .distinctUntilChanged()
+
     suspend fun createDeck(deck: Deck): Long =
         deckDao.insert(deck.toEntity())
 

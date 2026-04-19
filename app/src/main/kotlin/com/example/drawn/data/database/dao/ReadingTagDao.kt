@@ -26,4 +26,7 @@ interface ReadingTagDao {
 
     @Query("DELETE FROM reading_tags WHERE tagId = :tagId")
     suspend fun deleteAllForTag(tagId: Long)
+
+    @Query("SELECT DISTINCT readingId FROM reading_tags WHERE tagId IN (:tagIds)")
+    fun observeReadingIdsByTags(tagIds: List<Long>): Flow<List<Long>>
 }

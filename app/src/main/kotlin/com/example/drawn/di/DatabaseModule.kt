@@ -5,11 +5,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.drawn.data.database.AppDatabase
 import com.example.drawn.data.database.dao.CardDao
+import com.example.drawn.data.database.dao.CustomCardDao
 import com.example.drawn.data.database.dao.DeckDao
 import com.example.drawn.data.database.dao.ReadingCardDao
 import com.example.drawn.data.database.dao.ReadingDao
 import com.example.drawn.data.database.dao.ReadingPhotoDao
+import com.example.drawn.data.database.dao.ReadingTagDao
 import com.example.drawn.data.database.dao.SpreadDao
+import com.example.drawn.data.database.dao.TagDao
 import com.example.drawn.data.database.migration.MIGRATION_1_2
 import dagger.Module
 import dagger.Provides
@@ -53,4 +56,13 @@ object DatabaseModule {
 
     @Provides
     fun provideReadingPhotoDao(db: AppDatabase): ReadingPhotoDao = db.readingPhotoDao()
+
+    @Provides
+    fun provideCustomCardDao(db: AppDatabase): CustomCardDao = db.customCardDao()
+
+    @Provides
+    fun provideTagDao(db: AppDatabase): TagDao = db.tagDao()
+
+    @Provides
+    fun provideReadingTagDao(db: AppDatabase): ReadingTagDao = db.readingTagDao()
 }

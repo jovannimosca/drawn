@@ -28,6 +28,18 @@ interface ReadingDao {
     @Query("SELECT * FROM readings WHERE id = :id")
     suspend fun getReadingById(id: Long): ReadingEntity?
 
+    @Query("SELECT * FROM readings WHERE isFavorite = 1 ORDER BY createdAt DESC")
+    fun observeFavorites(): Flow<List<ReadingEntity>>
+
+    @Query("""
+        SELECT r.id, r.title, r.spreadId, s.name as spreadName, r.createdAt, r.notes, r.isFavorite
+        FROM readings r
+        INNER JOIN spreads s ON r.spreadId = s.id
+        WHERE r.isFavorite = 1
+        ORDER BY r.createdAt DESC
+    """)
+    fun observeFavoritesWithSpread(): Flow<List<ReadingWithSpread>>
+
     @Insert
     suspend fun insert(reading: ReadingEntity): Long
 

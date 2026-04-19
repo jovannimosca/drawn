@@ -5,6 +5,7 @@ import com.example.drawn.data.database.dao.CardDao
 import com.example.drawn.data.database.dao.ReadingCardDao
 import com.example.drawn.data.database.dao.ReadingDao
 import com.example.drawn.data.database.dao.ReadingPhotoDao
+import com.example.drawn.data.database.dao.ReadingTagDao
 import com.example.drawn.data.database.dao.SpreadDao
 import com.example.drawn.data.database.entity.toDomain
 import com.example.drawn.data.database.entity.toEntity
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
@@ -28,7 +30,8 @@ class ReadingRepository(
     private val readingCardDao: ReadingCardDao,
     private val readingPhotoDao: ReadingPhotoDao,
     private val cardDao: CardDao,
-    private val spreadDao: SpreadDao
+    private val spreadDao: SpreadDao,
+    private val readingTagDao: ReadingTagDao
 ) {
     fun observeAllReadings(): Flow<List<Reading>> =
         readingDao.observeAllReadings()
@@ -113,4 +116,30 @@ class ReadingRepository(
         val photo = readingPhotoDao.getPhotoById(photoId)
         photo?.let { readingPhotoDao.delete(it) }
     }
+
+    suspend fun toggleFavorite(readingId: Long) {
+        val reading = readingDao.getReadingById(readingId)
+        reading?.let {
+            val updated = it.copy(isFavorite = !it.isFavorite)
+            readingDao.update(updated)
+        }
+    }
+
+    fun observeFavorites(): Flow<List<Reading>> =
+        readingDao.observeFavorites()
+            .map { entities -> entities.map { it.toDomain() } }
+            .distinctUntilChanged()
+
+    fun observeFavoritesWithSpread(): Flow<List<ReadingWithSpread>> =
+        readingDao.observeFavoritesWithSpread()
+            .distinctUntilChanged()
+
+    fun observeReadingsByTags(tagIds: List<Long>): Flow<List<Reading>> =
+        readingTagDao.observeReadingIdsByTags(tagIds)
+            .map { readingIds ->
+                readingIds.mapNotNull { id ->
+                    readingDao.getReadingById(id)?.toDomain()
+                }
+            }
+            .distinctUntilChanged()
 }

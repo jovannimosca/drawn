@@ -47,6 +47,8 @@ Plans:
 
 **Requirements**: DECK-01, DECK-02, DECK-03, DECK-04, DECK-05, TAG-01, TAG-02, TAG-03, TAG-04, TAG-05, TAG-06, TAG-07
 
+**Status**: ✅ COMPLETE
+
 **Success Criteria** (what must be TRUE):
 
 1. User can query custom decks as reactive list — deck list updates when decks added/edited/deleted
@@ -55,7 +57,11 @@ Plans:
 4. User can filter readings by tag — tag filter returns matching readings
 5. User can filter favorites — favorites filter returns marked readings only
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 09-01-PLAN.md — New repositories (CustomCard, Tag, ReadingTag, extend Deck)
+- [x] 09-02-PLAN.md — Extend ReadingRepository with favorites and tag filtering
 
 ### Phase 10: ViewModel Layer
 
@@ -128,7 +134,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 8. Database Schema | 1/1 | ✅ Complete | 2026-04-19 |
-| 9. Repository Layer | 0/1 | Not started | - |
+| 9. Repository Layer | 2/2 | ✅ Complete | 2026-04-19 |
 | 10. ViewModel Layer | 0/1 | Not started | - |
 | 11. UI Implementation | 0/1 | Not started | - |
 | 12. Backup/Restore | 0/1 | Not started | - |

@@ -5,6 +5,7 @@ import com.example.drawn.data.database.dao.CardDao
 import com.example.drawn.data.database.dao.ReadingCardDao
 import com.example.drawn.data.database.dao.ReadingDao
 import com.example.drawn.data.database.dao.ReadingPhotoDao
+import com.example.drawn.data.database.dao.ReadingTagDao
 import com.example.drawn.data.database.dao.SpreadDao
 import com.example.drawn.data.database.entity.CardEntity
 import com.example.drawn.data.database.entity.ReadingCardEntity
@@ -39,6 +40,7 @@ class ReadingRepositoryTest {
     private val readingPhotoDao: ReadingPhotoDao = mockk()
     private val cardDao: CardDao = mockk()
     private val spreadDao: SpreadDao = mockk()
+    private val readingTagDao: ReadingTagDao = mockk()
 
     private lateinit var repository: ReadingRepository
 
@@ -72,7 +74,7 @@ class ReadingRepositoryTest {
 
     @BeforeEach
     fun setUp() {
-        repository = ReadingRepository(readingDao, readingCardDao, readingPhotoDao, cardDao, spreadDao)
+        repository = ReadingRepository(readingDao, readingCardDao, readingPhotoDao, cardDao, spreadDao, readingTagDao)
     }
 
     @Nested

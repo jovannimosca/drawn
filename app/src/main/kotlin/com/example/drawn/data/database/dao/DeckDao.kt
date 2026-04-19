@@ -16,6 +16,9 @@ interface DeckDao {
     @Query("SELECT * FROM decks WHERE isCustom = 0")
     fun observeBuiltInDecks(): Flow<List<DeckEntity>>
 
+    @Query("SELECT * FROM decks WHERE isCustom = 1")
+    fun observeCustomDecks(): Flow<List<DeckEntity>>
+
     @Query("SELECT * FROM decks WHERE id = :id")
     suspend fun getDeckById(id: Long): DeckEntity?
 
