@@ -126,9 +126,55 @@ Drawn is a local-only Android app for tracking and organizing tarot card reading
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
-## Conventions
+## Database Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+### Pre-populated Database Strategy
+
+This project uses a pre-populated database for initial seed data (RWS deck, default spreads).
+
+#### Key Principles
+
+1. **Always use migrations** — Never use `fallbackToDestructiveMigration()`. It destroys user data.
+2. **Migrations include data** — Schema changes AND new default data MUST be in migrations.
+3. **Asset DB for fresh installs** — Only used on first install.
+4. **Migration path required** — All users (fresh + existing) must receive updates.
+
+#### Why This Matters
+
+| User | What they get |
+|------|---------------|
+| Fresh install | Asset DB copied |
+| Existing (no migration) | No update — stale data |
+| Existing (with migration) | Gets new spreads/cards |
+
+#### When Adding New Default Data
+
+If you add a new spread or card to the default deck:
+
+1. Create a migration file (e.g., `Migration_3_4.kt`)
+2. Include BOTH schema changes AND data inserts in the migration
+3. Add to AppDatabase `.addMigrations()`
+
+```kotlin
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Schema changes
+        db.execSQL("ALTER TABLE ...")
+
+        // New default data - CRITICAL
+        db.execSQL("INSERT INTO spreads ...")
+    }
+}
+```
+
+#### For Agentic AI
+
+- Always create migrations for ANY database change
+- Always include default data in migrations
+- Test migration path on device with existing data before marking complete
+- If user reports migration error, investigate identity hash mismatches
+- Export schema: `./gradlew room.schema`
+
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
