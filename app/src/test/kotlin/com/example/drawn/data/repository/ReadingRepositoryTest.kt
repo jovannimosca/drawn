@@ -156,26 +156,46 @@ class ReadingRepositoryTest {
         }
     }
 
-    @Nested
+@Nested
     inner class CreateReading {
 
         @Test
-        fun `createReading inserts reading and cards, returns readingId`() = runTest {
+        fun `createReading inserts reading and cards, returns id`() = runTest {
             coEvery { readingDao.insert(any()) } returns 1L
             coEvery { readingCardDao.insertAll(any()) } returns Unit
 
-            val cards = listOf(
-                ReadingCard(
-                    id = 0L, readingId = 0L, cardId = 1L,
-                    positionName = "Past", positionOrder = 0
-                )
-            )
-
-            val readingId = repository.createReading(testReading, cards)
+            val readingId = repository.createReading(testReading, listOf(
+                ReadingCard(id = 0L, readingId = 0L, cardId = 1L, positionName = "Past", positionOrder = 0)
+            ))
 
             assertEquals(1L, readingId)
             coVerify { readingDao.insert(match { it.title == "Test Reading" && it.spreadId == 1L }) }
             coVerify { readingCardDao.insertAll(match { it.size == 1 && it[0].readingId == 1L }) }
+        }
+
+        @Test
+        fun `createReading with empty cards list`() = runTest {
+            coEvery { readingDao.insert(any()) } returns 1L
+            coEvery { readingCardDao.insertAll(any()) } returns Unit
+
+            val readingId = repository.createReading(testReading, emptyList())
+
+            assertEquals(1L, readingId)
+            coVerify { readingDao.insert(any()) }
+            coVerify { readingCardDao.insertAll(emptyList()) }
+        }
+
+        @Test
+        fun `createReading maps card with generated readingId`() = runTest {
+            coEvery { readingDao.insert(any()) } returns 5L
+            coEvery { readingCardDao.insertAll(any()) } returns Unit
+
+            val readingId = repository.createReading(testReading.copy(id = 0), listOf(
+                ReadingCard(id = 0L, readingId = 0L, cardId = 1L, positionName = "Past", positionOrder = 0)
+            ))
+
+            assertEquals(5L, readingId)
+            coVerify { readingCardDao.insertAll(match { it.size == 1 && it[0].readingId == 5L }) }
         }
     }
 
@@ -230,6 +250,41 @@ class ReadingRepositoryTest {
             repository.deleteReading(99L)
 
             coVerify(exactly = 0) { readingDao.delete(any()) }
+        }
+    }
+
+    @Nested
+    inner class ToggleFavorite {
+
+        @Test
+        fun `toggleFavorite flips isFavorite from false to true`() = runTest {
+            val unfavorited = testReadingEntity.copy(isFavorite = false)
+            coEvery { readingDao.getReadingById(1L) } returns unfavorited
+            coEvery { readingDao.update(any()) } returns Unit
+
+            repository.toggleFavorite(1L)
+
+            coVerify { readingDao.update(match { it.isFavorite == true }) }
+        }
+
+        @Test
+        fun `toggleFavorite flips isFavorite from true to false`() = runTest {
+            val favorited = testReadingEntity.copy(isFavorite = true)
+            coEvery { readingDao.getReadingById(1L) } returns favorited
+            coEvery { readingDao.update(any()) } returns Unit
+
+            repository.toggleFavorite(1L)
+
+            coVerify { readingDao.update(match { it.isFavorite == false }) }
+        }
+
+        @Test
+        fun `toggleFavorite does nothing when reading not found`() = runTest {
+            coEvery { readingDao.getReadingById(99L) } returns null
+
+            repository.toggleFavorite(99L)
+
+            coVerify(exactly = 0) { readingDao.update(any()) }
         }
     }
 
