@@ -11,6 +11,7 @@ import com.example.drawn.data.database.entity.CardEntity
 import com.example.drawn.data.database.entity.ReadingCardEntity
 import com.example.drawn.data.database.entity.ReadingEntity
 import com.example.drawn.data.database.entity.ReadingPhotoEntity
+import com.example.drawn.data.database.entity.ReadingWithSpread
 import com.example.drawn.data.database.entity.SpreadEntity
 import com.example.drawn.domain.model.ArcanaType
 import com.example.drawn.domain.model.Card
@@ -70,6 +71,15 @@ class ReadingRepositoryTest {
 
     private val testPhotoEntity = ReadingPhotoEntity(
         id = 1L, readingId = 1L, photoUri = "content://test/photo.jpg", caption = null
+    )
+
+    private val testReadingWithSpread = ReadingWithSpread(
+        id = 1L,
+        title = "Test Reading",
+        spreadId = 1L,
+        spreadName = "Three Card",
+        createdAt = 1000L,
+        notes = "Notes"
     )
 
     @BeforeEach
@@ -261,6 +271,85 @@ class ReadingRepositoryTest {
             repository.removePhotoFromReading(99L)
 
             coVerify(exactly = 0) { readingPhotoDao.delete(any()) }
+        }
+    }
+
+    @Nested
+    inner class ObserveAllReadingsWithSpread {
+
+        @Test
+        fun `observeAllReadingsWithSpread returns flow with spread info`() = runTest {
+            every { readingDao.observeAllReadingsWithSpread() } returns flowOf(listOf(testReadingWithSpread))
+
+            repository.observeAllReadingsWithSpread().test {
+                val result = awaitItem()
+                assertEquals(1, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `observeAllReadingsWithSpread emits empty when no readings`() = runTest {
+            every { readingDao.observeAllReadingsWithSpread() } returns flowOf(emptyList())
+
+            repository.observeAllReadingsWithSpread().test {
+                val result = awaitItem()
+                assertEquals(0, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class FavoritesObserving {
+
+        @Test
+        fun `observeFavorites returns flow of favorite readings`() = runTest {
+            every { readingDao.observeFavorites() } returns flowOf(listOf(testReadingEntity))
+
+            repository.observeFavorites().test {
+                val result = awaitItem()
+                assertEquals(1, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `observeFavoritesWithSpread returns flow with spread info`() = runTest {
+            every { readingDao.observeFavoritesWithSpread() } returns flowOf(listOf(testReadingWithSpread))
+
+            repository.observeFavoritesWithSpread().test {
+                val result = awaitItem()
+                assertEquals(1, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class ObserveReadingsByTags {
+
+        @Test
+        fun `observeReadingsByTags returns readings with any of the tags`() = runTest {
+            every { readingTagDao.observeReadingIdsByTags(listOf(1L, 2L)) } returns flowOf(listOf(1L))
+            coEvery { readingDao.getReadingById(1L) } returns testReadingEntity
+
+            repository.observeReadingsByTags(listOf(1L, 2L)).test {
+                val result = awaitItem()
+                assertEquals(1, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `observeReadingsByTags returns empty when no readings have tags`() = runTest {
+            every { readingTagDao.observeReadingIdsByTags(listOf(99L)) } returns flowOf(emptyList())
+
+            repository.observeReadingsByTags(listOf(99L)).test {
+                val result = awaitItem()
+                assertEquals(0, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 }
