@@ -6,8 +6,8 @@
 
 ## Phases
 
-- [ ] **Phase 8: Database Schema** — New entities for decks, cards, tags with relational schema
-- [ ] **Phase 9: Repository Layer** — Data access layer with Flow-based repositories
+- [x] **Phase 8: Database Schema** — New entities for decks, cards, tags with relational schema
+- [x] **Phase 9: Repository Layer** — Data access layer with Flow-based repositories
 - [ ] **Phase 10: ViewModel Layer** — State management for all v1.1 features
 - [ ] **Phase 11: UI Implementation** — Bottom navigation, deck editor, tag manager screens
 - [ ] **Phase 12: Backup/Restore** — JSON export/import with media handling
@@ -60,8 +60,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [x] 09-01-PLAN.md — New repositories (CustomCard, Tag, ReadingTag, extend Deck)
-- [x] 09-02-PLAN.md — Extend ReadingRepository with favorites and tag filtering
+- [x] 09-01-PLAN.md — New repositories (CustomCard, Tag, ReadingTag, extend Deck) ✅ DONE
+- [ ] 09-02-PLAN.md — Extend ReadingRepository with favorites and tag filtering
 
 ### Phase 10: ViewModel Layer
 
