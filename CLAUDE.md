@@ -177,6 +177,62 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 
 <!-- GSD:conventions-end -->
 
+<!-- GSD:testing-start source:TESTING -->
+## Testing Requirements
+
+### Coverage Threshold
+- **80% code coverage minimum** — enforced in CI/CD pipeline via Kover
+- Coverage is measured for business logic only (ViewModels, Repositories, UseCases)
+- UI layer is explicitly EXCLUDED from coverage (see build.gradle.kts kover filters)
+
+### Unit Tests
+- All new ViewModels MUST have corresponding unit tests in `app/src/test/kotlin/`
+- Tests use JUnit 5 + MockK + Turbine for Flow testing
+- Test naming: `{ClassName}Test.kt`
+
+### Instrumentation Tests (Compose UI)
+- All new Compose screens MUST have corresponding instrumentation tests in `app/src/androidTest/kotlin/`
+- Tests use `createComposeRule()` + MockK
+- Test naming: `{ScreenName}Test.kt`
+- Example pattern:
+  ```kotlin
+  @RunWith(AndroidJUnit4::class)
+  class DeckListScreenTest {
+      @get:Rule val composeTestRule = createComposeRule()
+      
+      @Test
+      fun successState_withDecks_displaysDeckList() {
+          // Arrange
+          val viewModel = mockk<ViewModel>(relaxed = true)
+          val uiStateFlow = MutableStateFlow(UiState.Success(testData))
+          every { viewModel.uiState } returns uiStateFlow
+          
+          // Act
+          composeTestRule.setContent { Screen(viewModel = viewModel) }
+          
+          // Assert
+          composeTestRule.onNodeWithText("Expected").assertIsDisplayed()
+      }
+  }
+  ```
+
+### NEVER Commit Without Verification
+- **ALWAYS run `./gradlew :app:testDebugUnitTest :app:koverVerify`** before committing
+- If coverage drops below 80%, you MUST either:
+  1. Add more unit tests to increase coverage, OR
+  2. Add instrumentation tests (if UI code), OR
+  3. Ask the user how to proceed
+- **NEVER use `--no-verify` or `--no-hooks`** unless explicitly instructed by the user
+- If coverage fails and you cannot add more meaningful tests, ASK THE USER how to proceed
+
+### Pre-commit Checklist
+1. Run unit tests: `./gradlew :app:testDebugUnitTest`
+2. Run coverage: `./gradlew :app:koverVerify`
+3. If coverage fails, add tests or ask user
+4. Only commit when all checks pass
+
+<!-- GSD:testing-end -->
+
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
 ## Architecture
 

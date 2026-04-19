@@ -72,6 +72,59 @@ class DeckRepositoryTest {
     }
 
     @Nested
+    inner class ObserveBuiltInDecks {
+
+        @Test
+        fun `observeBuiltInDecks returns flow of non-custom decks`() = runTest {
+            every { deckDao.observeBuiltInDecks() } returns flowOf(listOf(testDeckEntity))
+
+            repository.observeBuiltInDecks().test {
+                val result = awaitItem()
+                assertEquals(1, result.size)
+                assertEquals(false, result[0].isCustom)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `observeBuiltInDecks emits empty list when no built-in decks`() = runTest {
+            every { deckDao.observeBuiltInDecks() } returns flowOf(emptyList())
+
+            repository.observeBuiltInDecks().test {
+                val result = awaitItem()
+                assertEquals(0, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class ObserveCustomDecks {
+
+        @Test
+        fun `observeCustomDecks returns flow of custom decks`() = runTest {
+            every { deckDao.observeCustomDecks() } returns flowOf(listOf(testDeckEntity))
+
+            repository.observeCustomDecks().test {
+                val result = awaitItem()
+                assertEquals(1, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `observeCustomDecks emits empty list when no custom decks`() = runTest {
+            every { deckDao.observeCustomDecks() } returns flowOf(emptyList())
+
+            repository.observeCustomDecks().test {
+                val result = awaitItem()
+                assertEquals(0, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
     inner class CreateDeck {
 
         @Test

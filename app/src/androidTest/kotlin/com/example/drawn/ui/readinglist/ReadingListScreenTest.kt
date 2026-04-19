@@ -12,7 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.drawn.domain.model.Reading
+import com.example.drawn.data.database.entity.ReadingWithSpread
 import com.example.drawn.ui.theme.DrawnTheme
 import io.mockk.every
 import io.mockk.mockk
@@ -34,19 +34,21 @@ class ReadingListScreenTest {
     private lateinit var uiStateFlow: MutableStateFlow<ReadingListUiState>
     private lateinit var searchQueryFlow: MutableStateFlow<String>
 
-    private val testReading1 = Reading(
+    private val testReading1 = ReadingWithSpread(
         id = 1L,
         title = "Morning Reading",
         spreadId = 1L,
-        createdAt = Instant.now(),
+        spreadName = "Three Card",
+        createdAt = Instant.now().toEpochMilli(),
         notes = "Test notes"
     )
 
-    private val testReading2 = Reading(
+    private val testReading2 = ReadingWithSpread(
         id = 2L,
         title = "Evening Reading",
         spreadId = 2L,
-        createdAt = Instant.now(),
+        spreadName = "Celtic Cross",
+        createdAt = Instant.now().toEpochMilli(),
         notes = null
     )
 
