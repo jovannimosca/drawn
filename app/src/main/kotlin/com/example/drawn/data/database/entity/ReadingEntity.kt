@@ -25,7 +25,8 @@ data class ReadingEntity(
     val title: String,
     val spreadId: Long,
     val createdAt: Long,
-    val notes: String? = null
+    val notes: String? = null,
+    val isFavorite: Boolean = false
 )
 
 fun ReadingEntity.toDomain(): Reading = Reading(
@@ -33,7 +34,8 @@ fun ReadingEntity.toDomain(): Reading = Reading(
     title = title,
     spreadId = spreadId,
     createdAt = Instant.ofEpochMilli(createdAt),
-    notes = notes
+    notes = notes,
+    isFavorite = isFavorite
 )
 
 fun Reading.toEntity(): ReadingEntity = ReadingEntity(
@@ -41,7 +43,8 @@ fun Reading.toEntity(): ReadingEntity = ReadingEntity(
     title = title,
     spreadId = spreadId,
     createdAt = createdAt.toEpochMilli(),
-    notes = notes
+    notes = notes,
+    isFavorite = isFavorite
 )
 
 data class ReadingWithSpread(
@@ -50,5 +53,6 @@ data class ReadingWithSpread(
     val spreadId: Long,
     val spreadName: String,
     val createdAt: Long,
-    val notes: String? = null
+    val notes: String? = null,
+    val isFavorite: Boolean = false
 )

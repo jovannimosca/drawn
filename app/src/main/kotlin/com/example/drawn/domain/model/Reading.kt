@@ -7,5 +7,6 @@ data class Reading(
     val title: String,
     val spreadId: Long,
     val createdAt: Instant,
-    val notes: String? = null
+    val notes: String? = null,
+    val isFavorite: Boolean = false
 )

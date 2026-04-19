@@ -15,9 +15,9 @@ interface ReadingDao {
     fun observeAllReadings(): Flow<List<ReadingEntity>>
 
     @Query("""
-        SELECT r.id, r.title, r.spreadId, s.name as spreadName, r.createdAt, r.notes 
-        FROM readings r 
-        INNER JOIN spreads s ON r.spreadId = s.id 
+        SELECT r.id, r.title, r.spreadId, s.name as spreadName, r.createdAt, r.notes, r.isFavorite
+        FROM readings r
+        INNER JOIN spreads s ON r.spreadId = s.id
         ORDER BY r.createdAt DESC
     """)
     fun observeAllReadingsWithSpread(): Flow<List<ReadingWithSpread>>
