@@ -406,5 +406,20 @@ class ReadingRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `observeReadingsByTags handles readingNotFound in mapNotNull`() = runTest {
+            // First ID returns a reading, second ID returns null (simulates deleted reading)
+            every { readingTagDao.observeReadingIdsByTags(listOf(1L, 2L)) } returns flowOf(listOf(1L, 2L))
+            coEvery { readingDao.getReadingById(1L) } returns testReadingEntity
+            coEvery { readingDao.getReadingById(2L) } returns null
+
+            repository.observeReadingsByTags(listOf(1L, 2L)).test {
+                val result = awaitItem()
+                // Should only have 1 reading since second was null (filtered out by mapNotNull)
+                assertEquals(1, result.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 }
