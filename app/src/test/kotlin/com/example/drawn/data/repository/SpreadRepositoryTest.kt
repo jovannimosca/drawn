@@ -47,6 +47,17 @@ class SpreadRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `observeAllSpreads emits empty list when no spreads`() = runTest {
+            every { spreadDao.observeAllSpreads() } returns flowOf(emptyList())
+
+            repository.observeAllSpreads().test {
+                val spreads = awaitItem()
+                assertEquals(0, spreads.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 
     @Nested
@@ -82,6 +93,15 @@ class SpreadRepositoryTest {
             repository.insertAllSpreads(spreads)
 
             coVerify { spreadDao.insertAll(listOf(testSpreadEntity)) }
+        }
+
+        @Test
+        fun `insertAllSpreads handles empty list`() = runTest {
+            coEvery { spreadDao.insertAll(emptyList()) } returns Unit
+
+            repository.insertAllSpreads(emptyList())
+
+            coVerify { spreadDao.insertAll(emptyList()) }
         }
     }
 }
