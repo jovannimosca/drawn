@@ -50,6 +50,17 @@ class CardRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `observeAllCards emits empty list when no cards`() = runTest {
+            every { cardDao.observeAllCards() } returns flowOf(emptyList())
+
+            repository.observeAllCards().test {
+                val cards = awaitItem()
+                assertEquals(0, cards.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 
     @Nested
@@ -76,6 +87,18 @@ class CardRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `observeCardById handles different card IDs`() = runTest {
+            val differentCard = testCardEntity.copy(id = 5L, name = "The Magician")
+            every { cardDao.observeCardById(5L) } returns flowOf(differentCard)
+
+            repository.observeCardById(5L).test {
+                val card = awaitItem()
+                assertEquals("The Magician", card!!.name)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 
     @Nested
@@ -92,6 +115,29 @@ class CardRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `observeCardsByDeck returns empty for non-existent deck`() = runTest {
+            every { cardDao.observeCardsByDeck(99L) } returns flowOf(emptyList())
+
+            repository.observeCardsByDeck(99L).test {
+                val cards = awaitItem()
+                assertEquals(0, cards.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `observeCardsByDeck returns multiple cards for deck`() = runTest {
+            val card2 = testCardEntity.copy(id = 2L, name = "The Magician")
+            every { cardDao.observeCardsByDeck(1L) } returns flowOf(listOf(testCardEntity, card2))
+
+            repository.observeCardsByDeck(1L).test {
+                val cards = awaitItem()
+                assertEquals(2, cards.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 
     @Nested
@@ -105,6 +151,25 @@ class CardRepositoryTest {
             repository.insertAllCards(cards)
 
             coVerify { cardDao.insertAll(listOf(testCardEntity)) }
+        }
+
+        @Test
+        fun `insertAllCards handles empty list`() = runTest {
+            coEvery { cardDao.insertAll(emptyList()) } returns Unit
+
+            repository.insertAllCards(emptyList())
+
+            coVerify { cardDao.insertAll(emptyList()) }
+        }
+
+        @Test
+        fun `insertAllCards handles multiple cards`() = runTest {
+            val card2 = testCardEntity.copy(id = 2L, name = "The Magician")
+            coEvery { cardDao.insertAll(any()) } returns Unit
+
+            repository.insertAllCards(listOf(testCardEntity.toDomain(), card2.toDomain()))
+
+            coVerify { cardDao.insertAll(match { it.size == 2 }) }
         }
     }
 }
