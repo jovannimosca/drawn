@@ -221,6 +221,10 @@ kover {
                 classes("*Hilt_*", "dagger.hilt.*")
                 classes("*.ComposableSingletons*")
                 classes("hilt_aggregated_deps.*")
+                // Compiler-generated synthetic lambda classes (e.g., CardRepository$observeAllCards$$inlined$map$1)
+                // These are NOT real methods - Kotlin compiler creates them for inline Flow transformations
+                // They cannot be tested directly and are excluded to get accurate coverage
+                classes("com.example.drawn.data.repository.*\$*")
                 // UI - requires Android instrumentation
                 classes("com.example.drawn.ui.*")
                 // DI
